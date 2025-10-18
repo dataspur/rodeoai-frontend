@@ -1,25 +1,25 @@
 :root {
-  --primary: #e6b800;
-  --accent: #ffefa0;
-  --bg: #0f0f0f;
-  --panel: #1a1a1a;
-  --border: #2a2a2a;
+  --primary: #D8AC2F;
+  --accent: #C49A41;
+  --bg: #0B0B0D;
+  --panel: #111113;
+  --border: #2A2B30;
   --bubble-user: linear-gradient(120deg, var(--primary) 20%, #fff2 100%);
   --bubble-ai: var(--panel);
-  --text-light: #f5f5f5;
-  --text-muted: #888;
+  --text-light: #EDEDEF;
+  --text-muted: #A6A7AD;
   --shadow: 0 2px 8px rgba(30,30,0,0.09);
 }
 [data-theme="light"] {
-  --primary: #c18e00;
-  --accent: #6a4400;
-  --bg: #f6f4ed;
-  --panel: #fffaf3;
-  --border: #e4dec3;
+  --primary: #C49A41;
+  --accent: #D8AC2F;
+  --bg: #F5F5F5;
+  --panel: #FFFFFF;
+  --border: #D9DADD;
   --bubble-user: linear-gradient(120deg, var(--primary) 0%, #fff2 100%);
-  --bubble-ai: #fff9e0;
-  --text-light: #20201f;
-  --text-muted: #a0967a;
+  --bubble-ai: #F2F3F5;
+  --text-light: #0B0B0D;
+  --text-muted: #6B6E75;
 }
 html, body {
   background: var(--bg);
