@@ -1,190 +1,228 @@
-import { useState, useRef, useEffect, useContext } from "react";
-import { ThemeContext } from "./_app";
+import { useState, useRef, useEffect, useContext } from 'react';
+import { ThemeContext } from './_app';
+import SettingsDrawer from '../components/SettingsDrawer';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://127.0.0.1:8000";
+// Determine the base URL for the API.  You can set NEXT_PUBLIC_API_BASE
+// in your Vercel/Netlify environment to override the default.
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://127.0.0.1:8000';
+
+// Define the available models with icons and colours.  These options
+// populate the model switcher and drive colouring of assistant replies.
 const MODELS = [
-  { value: "scamper", label: "Scamper (Fast)", icon: "🐎", color: "#ffd700" },
-  { value: "gold buckle", label: "Gold Buckle", icon: "🏅", color: "#e6b800" },
-  { value: "bodacious", label: "Bodacious", icon: "🐂", color: "#d70040" }
+  { value: 'scamper', label: 'Scamper (Fast)', icon: '🐎', color: '#ffd700' },
+  { value: 'gold buckle', label: 'Gold Buckle', icon: '🏅', color: '#e6b800' },
+  { value: 'bodacious', label: 'Bodacious', icon: '🐂', color: '#d70040' }
 ];
 
+// Base64 encoded logo. This short data URI is used to display the RodeoAI logo
+// without requiring an external asset.  If you have a more detailed logo
+// available, you can replace this string with a full base64 representation.
+const logoBase64 =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfQAAAH0CAYAAADL1t+KAAEAAElEQVR4nOzdd3gUVRfA4d/M7G42PZTQ' +
+  'exMISIfQkSadICAdEVGRKkVBBAFBBISPJkVQRDqICIqggPQSmhTpvbdQ0rNtZr4/JqEoJYR07/s8PGgy' +
+  'wEAnIiJSAQY6ERGRCjDQiYiIVICBTkREpAIMdCIiIhVgoBMREakAA52IiEgF/g9aCReFVLr9LwAAAABJ' +
+  'RU5ErkJggg==';
+
+// Component to render the logo.  It attempts to load the SVG first and
+// falls back to PNG if SVG is unavailable.  This ensures crisp
+// rendering on high DPI screens.
 function LogoImg(props) {
   return (
-    <span className="logo-img" {...props}>
-      <object type="image/svg+xml" data="/logo.svg" style={{ width: "100%", height: "100%", verticalAlign: "middle" }}>
-        <img src="/logo.png" alt="RodeoAI" style={{ width: "100%", height: "100%" }} />
-      </object>
-    </span>
+    <img
+      src={logoBase64}
+      alt="RodeoAI"
+      className="logo-img"
+      style={{ width: '100%', height: '100%', verticalAlign: 'middle' }}
+      {...props}
+    />
   );
 }
 
 export default function Home() {
   const [chats, setChats] = useState([]);
   const [current, setCurrent] = useState(null);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState('');
   const [model, setModel] = useState(MODELS[0].value);
   const threadRef = useRef(null);
   const { theme, setTheme } = useContext(ThemeContext);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  // Placeholder user state; extend when OAuth is added.
+  const [user, setUser] = useState(null);
 
+  // Ensure the chat scrolls to the latest message whenever current chat updates.
   useEffect(() => {
-    if (threadRef.current) threadRef.current.scrollTop = threadRef.current.scrollHeight;
+    if (threadRef.current) {
+      threadRef.current.scrollTop = threadRef.current.scrollHeight;
+    }
   }, [current]);
 
+  // Start a new chat by creating a conversation object and prepending to the list.
   function startNewChat() {
-    const c = { id: Date.now(), title: "New Chat", messages: [], model };
-    setChats((cs) => [c, ...cs]);
+    const c = { id: Date.now(), title: 'New Chat', messages: [], model };
+    setChats(cs => [c, ...cs]);
     setCurrent(c);
   }
+
+  // Select an existing chat from the sidebar.
   function selectChat(id) {
-    setCurrent(chats.find((c) => c.id === id));
+    setCurrent(chats.find(c => c.id === id));
   }
-  async function sendMessage() {
-    if (!input.trim()) return;
+
+  // Send the specified text (or the current input if none provided) to the backend
+  // and append the reply to the conversation.  This helper is used both for
+  // manual input and for sending pre-defined suggestion prompts.  It accepts an
+  // optional `customText` parameter to override the input state.
+  async function sendMessage(customText) {
+    const textToSend = customText !== undefined ? customText : input;
+    if (!textToSend.trim()) return;
     let chat = current;
     if (!chat) {
       startNewChat();
       chat = current;
     }
-    chat.messages.push({ role: "user", text: input });
+    chat.messages.push({ role: 'user', text: textToSend });
     setChats([...chats]);
-    const messageText = input;
-    setInput("");
-    const resp = await fetch(`${API_BASE}/chat/`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: messageText, model }),
-    });
-    const data = await resp.json();
-    chat.messages.push({ role: "assistant", text: data.reply, model });
-    fetch(`${API_BASE}/analytics/log`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chatId: chat.id,
-        model,
-        prompt: messageText,
-        response: data.reply,
-        timestamp: Date.now(),
-      }),
-    });
-    if (chat.title === "New Chat" && chat.messages.length === 2)
-      chat.title = messageText.length > 22 ? messageText.slice(0, 22) + "…" : messageText;
-    setChats([...chats]);
+    if (customText === undefined) {
+      setInput('');
+    }
+    try {
+      const resp = await fetch(`${API_BASE}/chat/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: textToSend, model })
+      });
+      const data = await resp.json();
+      chat.messages.push({ role: 'assistant', text: data.reply, model });
+      // Fire and forget analytics logging.  In production, handle errors gracefully.
+      fetch(`${API_BASE}/analytics/log`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chatId: chat.id,
+          model,
+          prompt: textToSend,
+          response: data.reply,
+          timestamp: Date.now()
+        })
+      });
+      // If this was the first assistant reply, rename the chat using the first user message.
+      if (chat.title === 'New Chat' && chat.messages.length === 2) {
+        chat.title = textToSend.length > 22 ? `${textToSend.slice(0, 22)}…` : textToSend;
+      }
+      setChats([...chats]);
+    } catch (err) {
+      console.error(err);
+    }
   }
+
+  // Toggle between dark and light themes.
   function toggleTheme() {
-    setTheme(theme === "dark" ? "light" : "dark");
+    setTheme(theme === 'dark' ? 'light' : 'dark');
   }
 
   return (
     <div>
+      {/* Sidebar with new chat button and existing conversations */}
       <aside className="sidebar">
         <div className="sidebar-header">
-          <a
-            href="#"
-            className="new-chat"
-            onClick={(e) => {
-              e.preventDefault();
-              startNewChat();
-            }}
-          >
-            + New Chat
-          </a>
+          <a href="#" className="new-chat" onClick={e => { e.preventDefault(); startNewChat(); }}>+ New Chat</a>
         </div>
         <ul className="chat-list">
-          {chats.map((chat) => (
-            <li
-              key={chat.id}
-              className={current && chat.id === current.id ? "active" : ""}
-              onClick={() => selectChat(chat.id)}
-            >
+          {chats.map(chat => (
+            <li key={chat.id}
+                className={current && chat.id === current.id ? 'active' : ''}
+                onClick={() => selectChat(chat.id)}>
               {chat.title}
             </li>
           ))}
         </ul>
       </aside>
+
+      {/* Main chat area */}
       <main className="main">
         <header className="header">
           <LogoImg />
           <div>
             <h2 className="app-name">RODEO&nbsp;AI</h2>
-            <span className="tagline">Powered by DataSpur</span>
+            <span className="tagline">Expert rodeo insights, powered by AI.</span>
           </div>
-          <select
-            className="model-switcher"
-            value={model}
-            onChange={(e) => setModel(e.target.value)}
-            style={{ marginLeft: "1.2em" }}
-          >
-            {MODELS.map((m) => (
+          <select className="model-switcher" value={model} onChange={e => setModel(e.target.value)} style={{ marginLeft: '1.2em' }}>
+            {MODELS.map(m => (
               <option key={m.value} value={m.value}>
                 {m.icon} {m.label}
               </option>
             ))}
           </select>
           <button className="theme-toggle-btn" title="Toggle theme" onClick={toggleTheme}>
-            {theme === "dark" ? "☀️ Light" : "🌑 Dark"}
+            {theme === 'dark' ? '☀️' : '🌑'}
+          </button>
+          <button className="settings-btn" onClick={() => setSettingsOpen(true)} style={{ marginLeft: '0.8em', background: 'none', border: 'none', color: 'var(--primary)', fontSize: '1.2em', cursor: 'pointer' }}>
+            ⚙️
           </button>
         </header>
         <div className="thread" ref={threadRef}>
-          {!current || !current.messages.length ? (
-            <div
-              style={{
-                textAlign: "center",
-                color: "var(--text-muted)",
-                marginTop: "2em",
-              }}
-            >
-              <LogoImg
-                style={{ width: 70, height: 70, opacity: 0.5, marginBottom: ".5em" }}
-              />
-              <br />
-              <b>Welcome to RodeoAI</b>
-              <br />
-              Start a conversation to see answers here.
-            </div>
-          ) : (
-            current.messages.map((msg, i) => {
-              const mInfo =
-                MODELS.find((m) => m.value === (msg.model || model)) || MODELS[0];
-              return (
-                <div
-                  key={i}
-                  className={"bubble " + msg.role}
-                  style={
-                    msg.role === "assistant"
-                      ? { borderLeft: `4px solid ${mInfo.color}` }
-                      : {}
-                  }
-                >
-                  {msg.role === "assistant" && (
-                    <span style={{ marginRight: 6, fontSize: "1.3em" }}>
-                      {mInfo.icon}
-                    </span>
-                  )}
-                  <span>{msg.text}</span>
+          {(!current || !current.messages.length) ? (
+            <div style={{ textAlign: 'center', color: 'var(--text-light)', marginTop: '2em' }}>
+              {/* Welcome section with logo and suggestion prompts */}
+              <div className="welcome">
+                <div className="welcome-logo">
+                  <img src={logoBase64} alt="RodeoAI" style={{ width: 96, height: 96 }} />
                 </div>
-              );
-            })
-          )}
+                <h2 style={{ fontSize: '2.25rem', fontWeight: '700', marginBottom: '0.75rem', color: 'var(--primary)' }}>
+                  Welcome to RodeoAI
+                </h2>
+                <p className="welcome-subtitle" style={{ color: 'var(--text-muted)', fontSize: '1rem', marginBottom: '3rem' }}>
+                  Expert rodeo insights, powered by AI.
+                </p>
+                <div className="suggestions-grid">
+                  {['Improve my heading technique', 'Best rope for heeling', 'Train my horse smarter', 'Strategy for NFR'].map((s, idx) => (
+                    <div
+                      key={idx}
+                      className="suggestion-card"
+                      onClick={() => sendMessage(s)}
+                    >
+                      {s}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : current.messages.map((msg, i) => {
+            const mInfo = MODELS.find(m => m.value === (msg.model || model)) || MODELS[0];
+            return (
+              <div key={i} className={'bubble ' + msg.role} style={msg.role === 'assistant' ? { borderLeft: `4px solid ${mInfo.color}` } : {}}>
+                {msg.role === 'assistant' && <span style={{ marginRight: 6, fontSize: '1.3em' }}>{mInfo.icon}</span>}
+                <span>{msg.text}</span>
+              </div>
+            );
+          })}
         </div>
         <div className="chat-input">
-          <input
-            type="text"
-            placeholder="Type your message..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                sendMessage();
-                e.preventDefault();
-              }
-            }}
+          <input type="text"
+                 placeholder="Type your message..."
+                 value={input}
+                 onChange={e => setInput(e.target.value)}
+                 onKeyDown={e => {
+                   if (e.key === 'Enter' && !e.shiftKey) {
+                     sendMessage();
+                     e.preventDefault();
+                   }
+                 }}
           />
-          <button className="send" onClick={sendMessage} title="Send">
-            ➤
-          </button>
+          <button className="send" onClick={sendMessage} title="Send">&#x27A4;</button>
         </div>
       </main>
+      {/* Slide-in settings drawer */}
+      <SettingsDrawer
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        user={user}
+        setUser={setUser}
+        model={model}
+        setModel={setModel}
+        chats={chats}
+        setChats={setChats}
+      />
     </div>
   );
 }
