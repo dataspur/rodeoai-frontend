@@ -14,23 +14,22 @@ const MODELS = [
   { value: 'bodacious', label: 'Bodacious', icon: '🐂', color: '#d70040' }
 ];
 
-// Base64 encoded logo. This short data URI is used to display the RodeoAI logo
-// without requiring an external asset.  If you have a more detailed logo
-// available, you can replace this string with a full base64 representation.
+// Base64 encoded logo (unused now, kept for reference)
 const logoBase64 =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfQAAAH0CAYAAADL1t+KAAEAAElEQVR4nOzdd3gUVRfA4d/M7G42PZTQ' +
   'exMISIfQkSadICAdEVGRKkVBBAFBBISPJkVQRDqICIqggPQSmhTpvbdQ0rNtZr4/JqEoJYR07/s8PGgy' +
   'wEAnIiJSAQY6ERGRCjDQiYiIVICBTkREpAIMdCIiIhVgoBMREakAA52IiEgF/g9aCReFVLr9LwAAAABJ' +
   'RU5ErkJggg==';
 
-// Component to render the logo.  It attempts to load the SVG first and
-// falls back to PNG if SVG is unavailable.  This ensures crisp
-// rendering on high DPI screens.
+// Use external logo file instead of base64 for crisp rendering and branding
+const logoSrc = '/logo.png';
+
+// Component to render the logo.  
 function LogoImg(props) {
   return (
     <img
-      src={logoBase64}
-      alt="RodeoAI"
+      src={logoSrc}
+      alt="Rodeo AI"
       className="logo-img"
       style={{ width: '100%', height: '100%', verticalAlign: 'middle' }}
       {...props}
@@ -93,7 +92,7 @@ export default function Home() {
       });
       const data = await resp.json();
       chat.messages.push({ role: 'assistant', text: data.reply, model });
-      // Fire and forget analytics logging.  In production, handle errors gracefully.
+      // Fire and forget analytics logging.
       fetch(`${API_BASE}/analytics/log`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -166,7 +165,7 @@ export default function Home() {
               {/* Welcome section with logo and suggestion prompts */}
               <div className="welcome">
                 <div className="welcome-logo">
-                  <img src={logoBase64} alt="RodeoAI" style={{ width: 96, height: 96 }} />
+                  <img src={logoSrc} alt="Rodeo AI" style={{ width: 96, height: 96 }} />
                 </div>
                 <h2 style={{ fontSize: '2.25rem', fontWeight: '700', marginBottom: '0.75rem', color: 'var(--primary)' }}>
                   Welcome to RodeoAI
