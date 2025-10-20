@@ -3,6 +3,7 @@ from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import os
+import sys
 
 app = FastAPI()
 
@@ -14,48 +15,48 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+client = None
 try:
     from openai import OpenAI
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-except:
-    client = None
+    api_key = os.getenv("OPENAI_API_KEY")
+    if api_key:
+        client = OpenAI(api_key=api_key)
+except Exception as e:
+    print(f"Error: {e}", file=sys.stderr)
 
 class ChatRequest(BaseModel):
     message: str
     model: str = "scamper"
 
 @app.get("/")
-def health():
+def root():
     return {"status": "ok"}
 
 @app.post("/api/chat/")
-async def chat_endpoint(request: ChatRequest):
+async def chat(request: ChatRequest):
     if not client:
         raise HTTPException(status_code=500, detail="Client not ready")
-    
-    message = request.message
-    model_choice = request.model or "scamper"
     
     models = {
         "scamper": "gpt-4o-mini",
         "gold_buckle": "gpt-4o",
         "bodacious": "gpt-4o"
     }
-    model = models.get(model_choice, "gpt-4o-mini")
+    model = models.get(request.model, "gpt-4o-mini")
     
     prompts = {
         "scamper": "You are Scamper, a fast rodeo AI.",
         "gold_buckle": "You are Gold Buckle, a balanced rodeo expert.",
         "bodacious": "You are Bodacious, a premium rodeo AI."
     }
-    system = prompts.get(model_choice, "You are a rodeo AI.")
+    system = prompts.get(request.model, "You are a rodeo AI.")
     
     async def generate():
         with client.messages.stream(
             model=model,
             max_tokens=1024,
             system=system,
-            messages=[{"role": "user", "content": message}]
+            messages=[{"role": "user", "content": request.message}]
         ) as stream:
             for text in stream.text_stream:
                 yield f"data: {text}\n\n"
