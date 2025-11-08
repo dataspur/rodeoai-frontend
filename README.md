@@ -119,23 +119,92 @@ The backend maps these model names:
 
 ## Features
 
-### Frontend Features
-- Real-time streaming responses
+### Frontend Features (Quick Wins ✅)
+- **Real-time streaming responses** with typing indicators
+- **Dark/light theme toggle** with localStorage persistence
+- **Copy to clipboard** button for AI responses
+- **Regenerate response** functionality
+- **Message editing** - edit and resend your questions
+- **Feedback buttons** (thumbs up/down) on AI responses
+- **Keyboard shortcuts** - Ctrl+Enter to send messages
 - Message history maintained in conversation
 - Clean, modern UI with rodeo branding
-- Model selection (Scamper, Gold Buckle, Bodacious)
-- Dark/light theme toggle
-- Responsive design
+- Model selection (Scamper/gpt-4o-mini, Gold Buckle/gpt-4o, Bodacious/o1)
+- Responsive design with smooth animations
 - Auto-scroll to latest messages
-- Error handling with user feedback
+- Error handling with user-friendly toast notifications
 
-### Backend Features
+### Backend Features (High Priority ✅)
+#### Chat & Streaming
 - Streaming responses using OpenAI's Chat Completions API
+- Conversation context maintained across messages
 - CORS enabled for cross-origin requests
-- Proper error handling
-- System message for rodeo context
-- Health check endpoint
-- Request validation with Pydantic
+- Proper error handling with detailed logging
+
+#### Database & Persistence
+- **PostgreSQL/SQLite support** with SQLAlchemy ORM
+- **Conversation history** saved to database
+- **Resume conversations** across sessions
+- **Search conversations** by title or content
+- **Export chat history** to PDF or plain text
+- Automatic conversation titling from first message
+
+#### User Management
+- **User profiles** with customizable preferences
+- **Skill level settings** (beginner, intermediate, advanced, professional)
+- **Personalized AI responses** based on user skill level
+- User preferences stored as JSON for flexibility
+
+#### Rate Limiting & Security
+- **Rate limiting** on all endpoints (using slowapi)
+- JWT-based authentication
+- OAuth support structure (Google OAuth ready)
+- Secure password hashing with bcrypt
+
+#### Feedback & Analytics
+- **User feedback collection** (thumbs up/down)
+- Feedback stored with message references
+- Token usage tracking for cost analysis
+
+## API Endpoints
+
+### Chat
+- `POST /api/chat` - Send message and get streaming response
+  - Body: `{messages: [{role, content}], model, conversation_id?, user_id?}`
+  - Returns: Streaming text response
+  - Headers: `X-Conversation-ID` with the conversation ID
+
+### Conversations
+- `GET /api/conversations` - List all conversations
+  - Query params: `user_id`, `limit`, `offset`
+- `GET /api/conversations/{id}` - Get specific conversation with messages
+- `POST /api/conversations` - Create new conversation
+- `PATCH /api/conversations/{id}` - Update conversation (title, archive)
+- `DELETE /api/conversations/{id}` - Delete conversation
+- `GET /api/conversations/search?q=query` - Search conversations
+
+### Export
+- `GET /api/conversations/{id}/export/text` - Export as plain text
+- `GET /api/conversations/{id}/export/pdf` - Export as PDF
+
+### Users
+- `GET /api/users/{id}` - Get user profile
+- `PATCH /api/users/{id}` - Update user profile
+  - Body: `{full_name?, skill_level?, preferences?}`
+
+### Feedback
+- `POST /api/feedback` - Submit feedback on a response
+  - Body: `{message_id, feedback: 'positive'|'negative', comment?}`
+
+### Authentication
+- `POST /api/auth/google` - Authenticate with Google OAuth
+- `GET /api/auth/me` - Get current user info (requires JWT token)
+
+### Health
+- `GET /health` - Health check endpoint
+- `GET /` - Root endpoint
+
+All endpoints have rate limiting. See main.py:108-644 for details.
 
 ## Testing the Connection
 
@@ -143,7 +212,13 @@ The backend maps these model names:
 2. Open the frontend (either standalone HTML or Next.js)
 3. Look for the connection status indicator
 4. Try sending a message like "How do I improve my heading technique?"
-5. You should see a streaming response from the AI
+5. You should see a streaming response with typing indicator
+6. Try the new features:
+   - Toggle theme with the sun/moon button
+   - Copy responses with the copy button
+   - Regenerate responses
+   - Edit your messages
+   - Give feedback with thumbs up/down
 
 ### Troubleshooting
 
