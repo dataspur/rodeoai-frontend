@@ -29,9 +29,14 @@ class User(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     is_active = Column(Boolean, default=True)
 
+    # Payment fields
+    stripe_customer_id = Column(String(255), unique=True)
+
     # Relationships
     conversations = relationship("Conversation", back_populates="user", cascade="all, delete-orphan")
     feedback = relationship("Feedback", back_populates="user", cascade="all, delete-orphan")
+    payments = relationship("Payment", back_populates="user", cascade="all, delete-orphan")
+    subscriptions = relationship("Subscription", back_populates="user", cascade="all, delete-orphan")
 
 
 class Conversation(Base):
@@ -94,3 +99,42 @@ class RateLimit(Base):
     request_count = Column(Integer, default=1)
     window_start = Column(DateTime(timezone=True), server_default=func.now())
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class Payment(Base):
+    """Payment model to track rodeo entry payments and other transactions."""
+    __tablename__ = "payments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    stripe_payment_intent_id = Column(String(255), unique=True, index=True)
+    amount = Column(Integer, nullable=False)  # Amount in cents
+    currency = Column(String(3), default="usd")
+    status = Column(String(50), index=True)  # succeeded, pending, failed, canceled
+    description = Column(Text)
+    metadata = Column(Text)  # JSON string for additional data
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    # Relationships
+    user = relationship("User", back_populates="payments")
+
+
+class Subscription(Base):
+    """Subscription model for Pro and Premium plans."""
+    __tablename__ = "subscriptions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    stripe_subscription_id = Column(String(255), unique=True, index=True)
+    stripe_customer_id = Column(String(255), index=True)
+    plan = Column(String(50), nullable=False)  # free, pro, premium
+    status = Column(String(50), index=True)  # active, canceled, past_due, trialing
+    current_period_start = Column(DateTime(timezone=True))
+    current_period_end = Column(DateTime(timezone=True))
+    cancel_at_period_end = Column(Boolean, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    # Relationships
+    user = relationship("User", back_populates="subscriptions")

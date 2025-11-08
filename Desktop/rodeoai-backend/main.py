@@ -19,8 +19,9 @@ import tempfile
 
 # Import database and models
 from database import get_db, init_db
-from models import User, Conversation, Message, Feedback, SkillLevel
+from models import User, Conversation, Message, Feedback, SkillLevel, Payment, Subscription
 from auth import create_access_token, get_current_user, get_optional_user, get_or_create_user
+from payments import PaymentService, SubscriptionPlan
 
 app = FastAPI()
 
@@ -641,6 +642,315 @@ async def get_current_user_info(
         "preferences": json.loads(current_user.preferences) if current_user.preferences else {},
         "created_at": current_user.created_at.isoformat() if current_user.created_at else None
     }
+
+
+# Payment endpoints
+class PaymentIntentRequest(BaseModel):
+    amount: float  # Dollar amount
+    description: str
+    metadata: Optional[Dict] = None
+
+
+class SubscriptionRequest(BaseModel):
+    plan: str  # "pro" or "premium"
+    trial_days: Optional[int] = None
+
+
+@app.get("/api/subscription/plans")
+@limiter.limit("100/minute")
+async def get_subscription_plans(request: Request):
+    """Get available subscription plans and pricing."""
+    return {
+        "plans": [
+            SubscriptionPlan.FREE,
+            SubscriptionPlan.PRO,
+            SubscriptionPlan.PREMIUM
+        ]
+    }
+
+
+@app.post("/api/payments/create-intent")
+@limiter.limit("30/minute")
+async def create_payment_intent_endpoint(
+    request: Request,
+    payment_request: PaymentIntentRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Create a payment intent for one-time payments (rodeo entries).
+    Returns client_secret for Stripe.js to complete payment.
+    """
+    # Convert dollar amount to cents
+    amount_cents = int(payment_request.amount * 100)
+
+    # Get or create Stripe customer
+    if not current_user.stripe_customer_id:
+        customer = await PaymentService.create_customer(
+            email=current_user.email,
+            name=current_user.full_name,
+            metadata={"user_id": current_user.id}
+        )
+        current_user.stripe_customer_id = customer.id
+        db.commit()
+
+    # Create payment intent
+    intent = await PaymentService.create_payment_intent(
+        amount=amount_cents,
+        description=payment_request.description,
+        metadata=payment_request.metadata or {},
+        customer_id=current_user.stripe_customer_id
+    )
+
+    # Save to database
+    payment = Payment(
+        user_id=current_user.id,
+        stripe_payment_intent_id=intent.id,
+        amount=amount_cents,
+        status=intent.status,
+        description=payment_request.description,
+        metadata=json.dumps(payment_request.metadata) if payment_request.metadata else None
+    )
+    db.add(payment)
+    db.commit()
+
+    return {
+        "client_secret": intent.client_secret,
+        "payment_id": payment.id,
+        "amount": amount_cents,
+        "currency": "usd"
+    }
+
+
+@app.post("/api/payments/create-subscription")
+@limiter.limit("10/minute")
+async def create_subscription_endpoint(
+    request: Request,
+    subscription_request: SubscriptionRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Create a subscription for Pro or Premium plan.
+    Returns client_secret for payment confirmation.
+    """
+    # Validate plan
+    plan = SubscriptionPlan.get_plan_by_name(subscription_request.plan)
+    if plan == SubscriptionPlan.FREE:
+        raise HTTPException(status_code=400, detail="Cannot create subscription for free plan")
+
+    # Get or create Stripe customer
+    if not current_user.stripe_customer_id:
+        customer = await PaymentService.create_customer(
+            email=current_user.email,
+            name=current_user.full_name,
+            metadata={"user_id": current_user.id}
+        )
+        current_user.stripe_customer_id = customer.id
+        db.commit()
+
+    # Create subscription
+    stripe_subscription = await PaymentService.create_subscription(
+        customer_id=current_user.stripe_customer_id,
+        price_id=plan["price_id"],
+        trial_period_days=subscription_request.trial_days
+    )
+
+    # Save to database
+    subscription = Subscription(
+        user_id=current_user.id,
+        stripe_subscription_id=stripe_subscription.id,
+        stripe_customer_id=current_user.stripe_customer_id,
+        plan=subscription_request.plan.lower(),
+        status=stripe_subscription.status,
+        current_period_start=datetime.fromtimestamp(stripe_subscription.current_period_start),
+        current_period_end=datetime.fromtimestamp(stripe_subscription.current_period_end)
+    )
+    db.add(subscription)
+    db.commit()
+
+    # Extract client secret from payment intent
+    client_secret = stripe_subscription.latest_invoice.payment_intent.client_secret
+
+    return {
+        "subscription_id": subscription.id,
+        "client_secret": client_secret,
+        "status": stripe_subscription.status
+    }
+
+
+@app.delete("/api/payments/cancel-subscription/{subscription_id}")
+@limiter.limit("10/minute")
+async def cancel_subscription_endpoint(
+    request: Request,
+    subscription_id: int,
+    at_period_end: bool = True,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Cancel a subscription (at period end by default)."""
+    # Get subscription from database
+    subscription = db.query(Subscription).filter(
+        Subscription.id == subscription_id,
+        Subscription.user_id == current_user.id
+    ).first()
+
+    if not subscription:
+        raise HTTPException(status_code=404, detail="Subscription not found")
+
+    # Cancel on Stripe
+    stripe_subscription = await PaymentService.cancel_subscription(
+        subscription.stripe_subscription_id,
+        at_period_end=at_period_end
+    )
+
+    # Update database
+    subscription.status = stripe_subscription.status
+    subscription.cancel_at_period_end = at_period_end
+    db.commit()
+
+    return {
+        "status": "canceled" if not at_period_end else "canceling_at_period_end",
+        "period_end": subscription.current_period_end.isoformat() if subscription.current_period_end else None
+    }
+
+
+@app.get("/api/payments/my-payments")
+@limiter.limit("60/minute")
+async def get_my_payments(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get current user's payment history."""
+    payments = db.query(Payment).filter(
+        Payment.user_id == current_user.id
+    ).order_by(Payment.created_at.desc()).all()
+
+    return [{
+        "id": p.id,
+        "amount": p.amount / 100,  # Convert to dollars
+        "currency": p.currency,
+        "status": p.status,
+        "description": p.description,
+        "created_at": p.created_at.isoformat() if p.created_at else None
+    } for p in payments]
+
+
+@app.get("/api/payments/my-subscription")
+@limiter.limit("60/minute")
+async def get_my_subscription(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get current user's active subscription."""
+    subscription = db.query(Subscription).filter(
+        Subscription.user_id == current_user.id,
+        Subscription.status.in_(["active", "trialing"])
+    ).first()
+
+    if not subscription:
+        return {
+            "has_subscription": False,
+            "plan": "free"
+        }
+
+    plan_details = SubscriptionPlan.get_plan_by_name(subscription.plan)
+
+    return {
+        "has_subscription": True,
+        "id": subscription.id,
+        "plan": subscription.plan,
+        "status": subscription.status,
+        "price": plan_details.get("price", 0),
+        "features": plan_details.get("features", []),
+        "current_period_start": subscription.current_period_start.isoformat() if subscription.current_period_start else None,
+        "current_period_end": subscription.current_period_end.isoformat() if subscription.current_period_end else None,
+        "cancel_at_period_end": subscription.cancel_at_period_end
+    }
+
+
+@app.post("/api/webhooks/stripe")
+async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
+    """
+    Handle Stripe webhook events.
+    This endpoint receives payment confirmations and subscription updates.
+    """
+    payload = await request.body()
+    sig_header = request.headers.get("stripe-signature")
+    webhook_secret = os.getenv("STRIPE_WEBHOOK_SECRET")
+
+    if not webhook_secret:
+        raise HTTPException(status_code=500, detail="Webhook secret not configured")
+
+    # Verify webhook signature
+    event = PaymentService.construct_webhook_event(payload, sig_header, webhook_secret)
+
+    # Handle different event types
+    if event.type == "payment_intent.succeeded":
+        payment_intent = event.data.object
+
+        # Update payment in database
+        payment = db.query(Payment).filter(
+            Payment.stripe_payment_intent_id == payment_intent.id
+        ).first()
+
+        if payment:
+            payment.status = "succeeded"
+            db.commit()
+
+            print(f"✓ Payment succeeded: {payment_intent.id}", file=sys.stderr)
+
+    elif event.type == "payment_intent.payment_failed":
+        payment_intent = event.data.object
+
+        payment = db.query(Payment).filter(
+            Payment.stripe_payment_intent_id == payment_intent.id
+        ).first()
+
+        if payment:
+            payment.status = "failed"
+            db.commit()
+
+            print(f"✗ Payment failed: {payment_intent.id}", file=sys.stderr)
+
+    elif event.type == "customer.subscription.created":
+        subscription_obj = event.data.object
+
+        subscription = db.query(Subscription).filter(
+            Subscription.stripe_subscription_id == subscription_obj.id
+        ).first()
+
+        if subscription:
+            subscription.status = subscription_obj.status
+            db.commit()
+
+    elif event.type == "customer.subscription.updated":
+        subscription_obj = event.data.object
+
+        subscription = db.query(Subscription).filter(
+            Subscription.stripe_subscription_id == subscription_obj.id
+        ).first()
+
+        if subscription:
+            subscription.status = subscription_obj.status
+            subscription.current_period_start = datetime.fromtimestamp(subscription_obj.current_period_start)
+            subscription.current_period_end = datetime.fromtimestamp(subscription_obj.current_period_end)
+            db.commit()
+
+    elif event.type == "customer.subscription.deleted":
+        subscription_obj = event.data.object
+
+        subscription = db.query(Subscription).filter(
+            Subscription.stripe_subscription_id == subscription_obj.id
+        ).first()
+
+        if subscription:
+            subscription.status = "canceled"
+            db.commit()
+
+    return {"status": "success"}
 
 
 if __name__ == "__main__":
