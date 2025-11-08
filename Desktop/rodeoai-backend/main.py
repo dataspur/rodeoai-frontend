@@ -22,6 +22,7 @@ from database import get_db, init_db
 from models import User, Conversation, Message, Feedback, SkillLevel, Payment, Subscription
 from auth import create_access_token, get_current_user, get_optional_user, get_or_create_user
 from payments import PaymentService, SubscriptionPlan
+from rag_service import RAGService
 
 app = FastAPI()
 
@@ -154,15 +155,13 @@ async def chat(request: Request, chat_request: ChatRequest, db: Session = Depend
         if user and user.skill_level:
             skill_level = user.skill_level.value
 
-    # Convert Pydantic models to dicts for OpenAI API
-    messages = [{"role": msg.role, "content": msg.content} for msg in chat_request.messages]
+    # Convert Pydantic models to dicts for conversation history
+    conversation_history = []
+    for msg in chat_request.messages[:-1]:  # All messages except the last user message
+        conversation_history.append({"role": msg.role, "content": msg.content})
 
-    # Add system message for rodeo context with skill level
-    system_message = {
-        "role": "system",
-        "content": f"You are RodeoAI, an expert assistant for team roping, rodeo techniques, equipment, and training. The user's skill level is {skill_level}. Provide helpful, accurate advice tailored to their experience level."
-    }
-    messages.insert(0, system_message)
+    # Get the current user question (last message)
+    user_question = chat_request.messages[-1].content if chat_request.messages else ""
 
     # Save user message to database
     if len(chat_request.messages) > 0:
@@ -185,22 +184,18 @@ async def chat(request: Request, chat_request: ChatRequest, db: Session = Depend
                 db.commit()
 
     async def generate():
-        """Stream responses from OpenAI and save to database."""
+        """Stream responses using RAG and save to database."""
         full_response = ""
         try:
-            stream = client.chat.completions.create(
-                model=model_id,
-                messages=messages,
-                stream=True,
-                max_tokens=2000,
-                temperature=0.7,
-            )
-
-            for chunk in stream:
-                if chunk.choices[0].delta.content:
-                    content = chunk.choices[0].delta.content
-                    full_response += content
-                    yield content
+            # Use RAG to generate response with knowledge base context
+            for chunk in RAGService.augmented_response(
+                question=user_question,
+                conversation_history=conversation_history,
+                user_skill_level=skill_level,
+                stream=True
+            ):
+                full_response += chunk
+                yield chunk
 
             # Save assistant message to database after streaming completes
             db_message = Message(
