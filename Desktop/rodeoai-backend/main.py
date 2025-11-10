@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from datetime import timedelta
 import os
 import sys
+import logging
 
 from database import engine, get_db, Base
 from models import User, ContestantProfile
@@ -19,6 +20,11 @@ from auth import (
     get_password_hash, verify_password, create_access_token,
     get_current_active_user, ACCESS_TOKEN_EXPIRE_MINUTES
 )
+from taurus_routing import select_model_for_query
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -193,20 +199,23 @@ async def chat(request: ChatRequest):
     if not client:
         raise HTTPException(status_code=500, detail="Client not ready")
 
-    # TAURUS: Intelligent model routing based on task complexity
-    # Currently defaults to gpt-4o-mini, will auto-upgrade to gpt-4o or gpt-4 when tools are needed
-    model = "gpt-4o-mini"
+    # TAURUS: Intelligent model routing based on task complexity and tool requirements
+    model, analysis = select_model_for_query(request.message)
 
-    # Future enhancement: Analyze request.message for tool requirements and upgrade model accordingly
-    # if requires_advanced_tools(request.message):
-    #     model = "gpt-4o"  # or "gpt-4" for most complex tasks
+    # Log model selection for monitoring and optimization
+    logger.info(f"TAURUS Routing: {analysis['reasoning']}")
+    logger.info(f"Model: {model}, Complexity: {analysis['complexity_score']}/10, "
+                f"Tools: {analysis['tool_categories'] if analysis['requires_tools'] else 'None'}")
 
     system = "You are TAURUS, an advanced rodeo AI assistant powered by DataSpur. You provide expert insights on rodeo training, equipment, strategy, and competition. You can access tools and resources to help contestants, trainers, and rodeo organizers."
+
+    # Adjust token limit based on model complexity
+    max_tokens = 2048 if model in ["gpt-4o", "gpt-4"] else 1024
 
     async def generate():
         with client.messages.stream(
             model=model,
-            max_tokens=1024,
+            max_tokens=max_tokens,
             system=system,
             messages=[{"role": "user", "content": request.message}]
         ) as stream:
