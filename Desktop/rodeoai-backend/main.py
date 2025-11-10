@@ -44,7 +44,7 @@ except Exception as e:
 
 class ChatRequest(BaseModel):
     message: str
-    model: str = "scamper"
+    model: str = "taurus"
 
 # Root endpoint
 @app.get("/")
@@ -193,19 +193,15 @@ async def chat(request: ChatRequest):
     if not client:
         raise HTTPException(status_code=500, detail="Client not ready")
 
-    models = {
-        "scamper": "gpt-4o-mini",
-        "gold_buckle": "gpt-4o",
-        "bodacious": "gpt-4o"
-    }
-    model = models.get(request.model, "gpt-4o-mini")
+    # TAURUS: Intelligent model routing based on task complexity
+    # Currently defaults to gpt-4o-mini, will auto-upgrade to gpt-4o or gpt-4 when tools are needed
+    model = "gpt-4o-mini"
 
-    prompts = {
-        "scamper": "You are Scamper, a fast rodeo AI.",
-        "gold_buckle": "You are Gold Buckle, a balanced rodeo expert.",
-        "bodacious": "You are Bodacious, a premium rodeo AI."
-    }
-    system = prompts.get(request.model, "You are a rodeo AI.")
+    # Future enhancement: Analyze request.message for tool requirements and upgrade model accordingly
+    # if requires_advanced_tools(request.message):
+    #     model = "gpt-4o"  # or "gpt-4" for most complex tasks
+
+    system = "You are TAURUS, an advanced rodeo AI assistant powered by DataSpur. You provide expert insights on rodeo training, equipment, strategy, and competition. You can access tools and resources to help contestants, trainers, and rodeo organizers."
 
     async def generate():
         with client.messages.stream(

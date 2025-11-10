@@ -11,7 +11,6 @@ export default function Home() {
   const { user, isLoading } = useAuth();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
-  const [selectedModel, setSelectedModel] = useState('scamper');
   const [loading, setLoading] = useState(false);
   const [streaming, setStreaming] = useState('');
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -35,7 +34,7 @@ export default function Home() {
     setLoading(true);
     setStreaming('');
 
-    setMessages(prev => [...prev, { role: 'user', content: userMessage, model: selectedModel }]);
+    setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
 
     try {
       const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -47,7 +46,7 @@ export default function Home() {
         },
         body: JSON.stringify({
           message: userMessage,
-          model: selectedModel
+          model: 'taurus'
         })
       });
 
@@ -80,15 +79,14 @@ export default function Home() {
       }
 
       if (assistantMessage) {
-        setMessages(prev => [...prev, { role: 'assistant', content: assistantMessage, model: selectedModel }]);
+        setMessages(prev => [...prev, { role: 'assistant', content: assistantMessage }]);
         setStreaming('');
       }
     } catch (error: any) {
       console.error('Chat error:', error);
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: `Error: ${error.message}. Backend: ${process.env.NEXT_PUBLIC_API_URL}`,
-        model: selectedModel
+        content: `Error: ${error.message}. Backend: ${process.env.NEXT_PUBLIC_API_URL}`
       }]);
     } finally {
       setLoading(false);
@@ -109,15 +107,9 @@ export default function Home() {
           title="Chat"
           subtitle="Expert rodeo insights, powered by AI"
         >
-          <select
-            value={selectedModel}
-            onChange={(e) => setSelectedModel(e.target.value)}
-            className="bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm"
-          >
-            <option value="scamper">Scamper (Fast)</option>
-            <option value="gold_buckle">Gold Buckle (Balanced)</option>
-            <option value="bodacious">Bodacious (Premium)</option>
-          </select>
+          <div className="bg-gray-900 border border-yellow-500 rounded-lg px-4 py-2">
+            <span className="text-yellow-500 font-bold">TAURUS</span>
+          </div>
         </TopBar>
 
         {/* Chat Messages Area */}
