@@ -1,13 +1,20 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import { useAuth } from './lib/AuthContext';
+import AuthModal from './components/AuthModal';
+import ProfileSettingsModal from './components/ProfileSettingsModal';
 
 export default function Home() {
+  const { user, logout, isLoading } = useAuth();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [selectedModel, setSelectedModel] = useState('scamper');
   const [loading, setLoading] = useState(false);
   const [streaming, setStreaming] = useState('');
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -117,8 +124,8 @@ export default function Home() {
           </div>
           
           <div className="flex items-center gap-4">
-            <select 
-              value={selectedModel} 
+            <select
+              value={selectedModel}
               onChange={(e) => setSelectedModel(e.target.value)}
               className="bg-gray-900 border border-gray-700 rounded px-3 py-2 text-sm"
             >
@@ -126,7 +133,57 @@ export default function Home() {
               <option value="gold_buckle">🏆 Gold Buckle (Balanced)</option>
               <option value="bodacious">💎 Bodacious (Premium)</option>
             </select>
-            <button className="p-2 hover:bg-gray-800 rounded">⚙️</button>
+
+            {!isLoading && (
+              <>
+                {user ? (
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowUserMenu(!showUserMenu)}
+                      className="flex items-center gap-2 p-2 hover:bg-gray-800 rounded"
+                    >
+                      <span className="text-sm">👤 {user.username}</span>
+                    </button>
+
+                    {showUserMenu && (
+                      <div className="absolute right-0 mt-2 w-48 bg-gray-900 border border-gray-700 rounded-lg shadow-lg z-10">
+                        <button
+                          onClick={() => {
+                            setShowUserMenu(false);
+                            setShowProfileModal(true);
+                          }}
+                          className="w-full text-left px-4 py-2 hover:bg-gray-800 rounded-t-lg"
+                        >
+                          ⚙️ Profile Settings
+                        </button>
+                        <a
+                          href={`/profile/${user.username}`}
+                          className="block w-full text-left px-4 py-2 hover:bg-gray-800"
+                        >
+                          👤 View My Profile
+                        </a>
+                        <button
+                          onClick={() => {
+                            setShowUserMenu(false);
+                            logout();
+                          }}
+                          className="w-full text-left px-4 py-2 hover:bg-gray-800 rounded-b-lg text-red-400"
+                        >
+                          🚪 Logout
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setShowAuthModal(true)}
+                    className="bg-yellow-500 hover:bg-yellow-600 text-black px-4 py-2 rounded font-semibold"
+                  >
+                    Login / Sign Up
+                  </button>
+                )}
+              </>
+            )}
           </div>
         </div>
 
@@ -211,6 +268,10 @@ export default function Home() {
           </form>
         </div>
       </div>
+
+      {/* Modals */}
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
+      <ProfileSettingsModal isOpen={showProfileModal} onClose={() => setShowProfileModal(false)} />
     </div>
   );
 }
