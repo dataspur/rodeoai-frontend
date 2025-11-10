@@ -1,5 +1,6 @@
 """Database models for RodeoAI backend."""
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Boolean, Enum as SQLEnum
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Boolean, Enum as SQLEnum, Float, Index
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from database import Base
@@ -138,3 +139,137 @@ class Subscription(Base):
 
     # Relationships
     user = relationship("User", back_populates="subscriptions")
+
+
+class DeviceFingerprint(Base):
+    """Track devices uploading images for product recognition."""
+    __tablename__ = "device_fingerprints"
+
+    id = Column(Integer, primary_key=True, index=True)
+    device_id = Column(String(64), unique=True, index=True, nullable=False)
+
+    # Device metadata
+    camera_make = Column(String(100))
+    camera_model = Column(String(100))
+    software = Column(String(200))
+
+    # Tracking
+    first_seen = Column(DateTime(timezone=True), server_default=func.now())
+    last_seen = Column(DateTime(timezone=True), server_default=func.now())
+    upload_count = Column(Integer, default=1)
+
+    # Associated user (if authenticated)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+
+    # Additional metadata (JSONB for PostgreSQL, Text for SQLite)
+    metadata = Column(Text)  # Will store JSON string
+
+    __table_args__ = (
+        Index('idx_device_user', 'device_id', 'user_id'),
+    )
+
+
+class ImageUpload(Base):
+    """Track all image uploads for product recognition."""
+    __tablename__ = "image_uploads"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    device_id = Column(String(64), ForeignKey("device_fingerprints.device_id"))
+
+    # Image info
+    image_hash = Column(String(64), index=True)  # Perceptual hash
+    file_path = Column(String(500))
+    upload_timestamp = Column(DateTime(timezone=True), server_default=func.now())
+
+    # EXIF metadata
+    exif_data = Column(Text)  # JSON string
+
+    # GPS if available
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
+
+    # Recognition results (cached)
+    recognition_results = Column(Text)  # JSON string
+    processing_time_ms = Column(Integer)
+
+    __table_args__ = (
+        Index('idx_upload_device_time', 'device_id', 'upload_timestamp'),
+        Index('idx_upload_hash', 'image_hash'),
+    )
+
+
+class ProductCatalog(Base):
+    """Master product catalog for visual recognition."""
+    __tablename__ = "product_catalog"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Product identity
+    brand = Column(String(100), index=True, nullable=False)
+    model = Column(String(200), index=True, nullable=False)
+    category = Column(String(50), index=True)  # boots, hats, vests, etc.
+    subcategory = Column(String(100))
+
+    # Product details
+    description = Column(String(1000))
+    sku = Column(String(100), unique=True)
+    upc = Column(String(20), index=True)
+
+    # Visual data (stored as JSON strings)
+    image_urls = Column(Text)  # JSON array of product images
+    visual_embedding = Column(Text)  # Vector embedding for similarity search
+
+    # Metadata
+    attributes = Column(Text)  # JSON: color, size, material, etc.
+    keywords = Column(Text)  # JSON: search keywords
+
+    # Pricing (current best price - updated frequently)
+    current_best_price = Column(Float)
+    msrp = Column(Float)
+
+    # Priority for scraping (high priority products scraped more frequently)
+    priority_level = Column(String(20), default="normal")  # high, normal, low
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    __table_args__ = (
+        Index('idx_product_brand_model', 'brand', 'model'),
+        Index('idx_product_category', 'category', 'subcategory'),
+    )
+
+
+class ProductPrice(Base):
+    """Price history across different stores."""
+    __tablename__ = "product_prices"
+
+    id = Column(Integer, primary_key=True, index=True)
+    product_id = Column(Integer, ForeignKey("product_catalog.id"), index=True)
+
+    # Store info
+    store_name = Column(String(100), index=True)
+    store_url = Column(String(500))
+    product_url = Column(String(500))
+
+    # Price data
+    price = Column(Float, nullable=False)
+    original_price = Column(Float)  # If on sale
+    is_on_sale = Column(Boolean, default=False)
+    sale_end_date = Column(DateTime(timezone=True), nullable=True)
+
+    # Availability
+    in_stock = Column(Boolean, default=True)
+    stock_level = Column(String(50))  # "low", "medium", "high", or actual number
+
+    # Tracking
+    scraped_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+    last_verified = Column(DateTime(timezone=True))
+
+    # Metadata (stored as JSON string)
+    shipping_info = Column(Text)  # Free shipping, delivery time, etc.
+
+    __table_args__ = (
+        Index('idx_price_product_store', 'product_id', 'store_name'),
+        Index('idx_price_scraped', 'scraped_at'),
+    )

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, Request
+from fastapi import FastAPI, HTTPException, Depends, Request, UploadFile, File, Form
 from fastapi.responses import StreamingResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -16,6 +16,7 @@ import os
 import sys
 import json
 import tempfile
+import shutil
 
 # Import database and models
 from database import get_db, init_db
@@ -23,6 +24,7 @@ from models import User, Conversation, Message, Feedback, SkillLevel, Payment, S
 from auth import create_access_token, get_current_user, get_optional_user, get_or_create_user
 from payments import PaymentService, SubscriptionPlan
 from rag_service import RAGService
+from product_recognition_service import ProductRecognitionService
 
 app = FastAPI()
 
@@ -864,6 +866,102 @@ async def get_my_subscription(
         "current_period_end": subscription.current_period_end.isoformat() if subscription.current_period_end else None,
         "cancel_at_period_end": subscription.cancel_at_period_end
     }
+
+
+# Product Recognition endpoints
+@app.post("/api/recognize-product")
+@limiter.limit("20/minute")
+async def recognize_product(
+    request: Request,
+    file: UploadFile = File(...),
+    include_prices: bool = Form(True),
+    consent_to_fingerprinting: bool = Form(False),
+    current_user: Optional[User] = Depends(get_optional_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Upload an image and get product recognition results.
+
+    Identifies:
+    - Product category (boots, hats, vests, etc.)
+    - Brand (Ariat, Stetson, etc.)
+    - Specific model with visual similarity matching
+    - Current prices across multiple stores (if include_prices=True)
+
+    Privacy:
+    - Device fingerprinting only with explicit consent
+    - GPS data extraction (if available in EXIF)
+    - Metadata stored for analytics
+    """
+    # Validate file type
+    allowed_types = ["image/jpeg", "image/png", "image/jpg", "image/webp"]
+    if file.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid file type. Allowed: JPEG, PNG, WEBP"
+        )
+
+    # Save uploaded file to temporary location
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as temp_file:
+            # Copy uploaded file to temp file
+            shutil.copyfileobj(file.file, temp_file)
+            temp_path = temp_file.name
+
+        # Initialize recognition service
+        recognition_service = ProductRecognitionService(db)
+
+        # Process image and get results
+        result = recognition_service.recognize_product(
+            image_path=temp_path,
+            user_id=current_user.id if current_user else None,
+            include_prices=include_prices,
+            consent_to_fingerprinting=consent_to_fingerprinting
+        )
+
+        # Clean up temporary file
+        os.unlink(temp_path)
+
+        return result
+
+    except Exception as e:
+        # Clean up temp file on error
+        if 'temp_path' in locals() and os.path.exists(temp_path):
+            os.unlink(temp_path)
+
+        print(f"Error in product recognition: {e}", file=sys.stderr)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error processing image: {str(e)}"
+        )
+    finally:
+        file.file.close()
+
+
+@app.get("/api/product-analytics")
+@limiter.limit("30/minute")
+async def get_product_analytics(
+    request: Request,
+    current_user: Optional[User] = Depends(get_optional_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get analytics on product recognition uploads.
+
+    Returns:
+    - Total uploads
+    - Unique devices
+    - Most recognized categories/brands
+    - Average processing time
+    """
+    recognition_service = ProductRecognitionService(db)
+
+    # Get analytics (filtered by user if authenticated)
+    analytics = recognition_service.get_upload_analytics(
+        user_id=current_user.id if current_user else None
+    )
+
+    return analytics
 
 
 @app.post("/api/webhooks/stripe")

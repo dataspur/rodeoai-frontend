@@ -16,3 +16,12 @@ stripe==7.9.0
 chromadb==0.4.22
 sentence-transformers==2.2.2
 tiktoken==0.5.2
+
+# Image Processing
+pillow==10.1.0
+opencv-python==4.8.1.78
+imagehash==4.3.1
+python-magic==0.4.27
+
+# Cloud Storage (optional - for production)
+boto3==1.34.0
