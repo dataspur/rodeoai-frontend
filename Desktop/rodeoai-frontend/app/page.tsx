@@ -2,11 +2,13 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from './lib/AuthContext';
+import Navigation from './components/Navigation';
+import TopBar from './components/TopBar';
 import AuthModal from './components/AuthModal';
 import ProfileSettingsModal from './components/ProfileSettingsModal';
 
 export default function Home() {
-  const { user, logout, isLoading } = useAuth();
+  const { user, isLoading } = useAuth();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [selectedModel, setSelectedModel] = useState('scamper');
@@ -14,7 +16,6 @@ export default function Home() {
   const [streaming, setStreaming] = useState('');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const [showUserMenu, setShowUserMenu] = useState(false);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -38,7 +39,7 @@ export default function Home() {
 
     try {
       const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-      
+
       const response = await fetch(`${API_BASE}/api/chat/`, {
         method: 'POST',
         headers: {
@@ -84,10 +85,10 @@ export default function Home() {
       }
     } catch (error: any) {
       console.error('Chat error:', error);
-      setMessages(prev => [...prev, { 
-        role: 'assistant', 
+      setMessages(prev => [...prev, {
+        role: 'assistant',
         content: `Error: ${error.message}. Backend: ${process.env.NEXT_PUBLIC_API_URL}`,
-        model: selectedModel 
+        model: selectedModel
       }]);
     } finally {
       setLoading(false);
@@ -96,117 +97,61 @@ export default function Home() {
 
   return (
     <div className="flex h-screen bg-black text-white">
-      <div className="w-64 bg-black border-r border-gray-800 flex flex-col p-4">
-        <button className="w-full py-3 px-4 bg-gray-900 rounded-lg hover:bg-gray-800 mb-4 text-left font-semibold">
-          + New Chat
-        </button>
-        
-        <div className="flex-1">
-          <h3 className="text-xs font-semibold text-gray-500 mb-3">Today's Conversation</h3>
-          {messages.length > 0 && (
-            <div className="text-sm text-gray-400 cursor-pointer hover:text-white">
-              Chat Session
-            </div>
-          )}
-        </div>
-      </div>
+      {/* Navigation Sidebar */}
+      <Navigation user={user} />
 
+      {/* Main Content */}
       <div className="flex-1 flex flex-col">
-        <div className="border-b border-gray-800 p-6 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-yellow-500 rounded-lg flex items-center justify-center">
-              🐴
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-yellow-500">RODEO AI</h1>
-              <p className="text-sm text-gray-400">Powered by DataSpur</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <select
-              value={selectedModel}
-              onChange={(e) => setSelectedModel(e.target.value)}
-              className="bg-gray-900 border border-gray-700 rounded px-3 py-2 text-sm"
-            >
-              <option value="scamper">⚡ Scamper (Fast)</option>
-              <option value="gold_buckle">🏆 Gold Buckle (Balanced)</option>
-              <option value="bodacious">💎 Bodacious (Premium)</option>
-            </select>
+        {/* Top Bar */}
+        <TopBar
+          onOpenAuth={() => setShowAuthModal(true)}
+          onOpenProfile={() => setShowProfileModal(true)}
+          title="Chat"
+          subtitle="Expert rodeo insights, powered by AI"
+        >
+          <select
+            value={selectedModel}
+            onChange={(e) => setSelectedModel(e.target.value)}
+            className="bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm"
+          >
+            <option value="scamper">Scamper (Fast)</option>
+            <option value="gold_buckle">Gold Buckle (Balanced)</option>
+            <option value="bodacious">Bodacious (Premium)</option>
+          </select>
+        </TopBar>
 
-            {!isLoading && (
-              <>
-                {user ? (
-                  <div className="relative">
-                    <button
-                      onClick={() => setShowUserMenu(!showUserMenu)}
-                      className="flex items-center gap-2 p-2 hover:bg-gray-800 rounded"
-                    >
-                      <span className="text-sm">👤 {user.username}</span>
-                    </button>
-
-                    {showUserMenu && (
-                      <div className="absolute right-0 mt-2 w-48 bg-gray-900 border border-gray-700 rounded-lg shadow-lg z-10">
-                        <button
-                          onClick={() => {
-                            setShowUserMenu(false);
-                            setShowProfileModal(true);
-                          }}
-                          className="w-full text-left px-4 py-2 hover:bg-gray-800 rounded-t-lg"
-                        >
-                          ⚙️ Profile Settings
-                        </button>
-                        <a
-                          href={`/profile/${user.username}`}
-                          className="block w-full text-left px-4 py-2 hover:bg-gray-800"
-                        >
-                          👤 View My Profile
-                        </a>
-                        <button
-                          onClick={() => {
-                            setShowUserMenu(false);
-                            logout();
-                          }}
-                          className="w-full text-left px-4 py-2 hover:bg-gray-800 rounded-b-lg text-red-400"
-                        >
-                          🚪 Logout
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setShowAuthModal(true)}
-                    className="bg-yellow-500 hover:bg-yellow-600 text-black px-4 py-2 rounded font-semibold"
-                  >
-                    Login / Sign Up
-                  </button>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-
+        {/* Chat Messages Area */}
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center">
               <div className="text-center mb-8">
-                <div className="text-6xl mb-4">🐴</div>
                 <h2 className="text-4xl font-bold text-yellow-500 mb-2">Welcome to RodeoAI</h2>
-                <p className="text-gray-400">Expert rodeo insights, powered by AI.</p>
+                <p className="text-gray-400">Ask me anything about rodeo training, equipment, or strategy.</p>
               </div>
-              
+
               <div className="grid grid-cols-2 gap-3 max-w-2xl">
-                <button className="p-4 bg-gray-900 rounded-lg border border-gray-800 hover:border-gray-700 text-left text-sm">
+                <button
+                  onClick={() => setInput("How can I improve my heading technique?")}
+                  className="p-4 bg-gray-900 rounded-lg border border-gray-800 hover:border-gray-700 text-left text-sm"
+                >
                   Improve heading technique?
                 </button>
-                <button className="p-4 bg-gray-900 rounded-lg border border-gray-800 hover:border-gray-700 text-left text-sm">
+                <button
+                  onClick={() => setInput("What's the best rope for heeling?")}
+                  className="p-4 bg-gray-900 rounded-lg border border-gray-800 hover:border-gray-700 text-left text-sm"
+                >
                   Best rope for heeling?
                 </button>
-                <button className="p-4 bg-gray-900 rounded-lg border border-gray-800 hover:border-gray-700 text-left text-sm">
+                <button
+                  onClick={() => setInput("How do I train my horse smarter?")}
+                  className="p-4 bg-gray-900 rounded-lg border border-gray-800 hover:border-gray-700 text-left text-sm"
+                >
                   Train my horse smarter?
                 </button>
-                <button className="p-4 bg-gray-900 rounded-lg border border-gray-800 hover:border-gray-700 text-left text-sm">
+                <button
+                  onClick={() => setInput("What's the best strategy for NFR?")}
+                  className="p-4 bg-gray-900 rounded-lg border border-gray-800 hover:border-gray-700 text-left text-sm"
+                >
                   Strategy for NFR?
                 </button>
               </div>
@@ -216,30 +161,35 @@ export default function Home() {
               {messages.map((msg: any, idx: number) => (
                 <div key={idx} className={`flex gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                   {msg.role === 'assistant' && (
-                    <div className="w-8 h-8 bg-yellow-500 rounded flex items-center justify-center flex-shrink-0 text-sm">
-                      🐴
+                    <div className="w-8 h-8 bg-yellow-500 rounded flex items-center justify-center flex-shrink-0">
+                      <span className="text-black font-bold text-xs">AI</span>
                     </div>
                   )}
-                  <div 
+                  <div
                     className={`max-w-lg rounded-lg p-4 ${
-                      msg.role === 'user' 
-                        ? 'bg-yellow-500 text-black' 
+                      msg.role === 'user'
+                        ? 'bg-yellow-500 text-black'
                         : 'bg-gray-900 text-white'
                     }`}
                   >
                     {msg.content}
                   </div>
+                  {msg.role === 'user' && (
+                    <div className="w-8 h-8 bg-gray-700 rounded flex items-center justify-center flex-shrink-0">
+                      <span className="text-white font-bold text-xs">ME</span>
+                    </div>
+                  )}
                 </div>
               ))}
-              
+
               {streaming && (
                 <div className="flex gap-4">
-                  <div className="w-8 h-8 bg-yellow-500 rounded flex items-center justify-center flex-shrink-0 text-sm">
-                    🐴
+                  <div className="w-8 h-8 bg-yellow-500 rounded flex items-center justify-center flex-shrink-0">
+                    <span className="text-black font-bold text-xs">AI</span>
                   </div>
                   <div className="max-w-lg rounded-lg p-4 bg-gray-900">
                     {streaming}
-                    <span className="animate-pulse">▋</span>
+                    <span className="animate-pulse">|</span>
                   </div>
                 </div>
               )}
@@ -248,6 +198,7 @@ export default function Home() {
           )}
         </div>
 
+        {/* Input Area */}
         <div className="border-t border-gray-800 p-6">
           <form onSubmit={handleChat} className="flex gap-3">
             <input
@@ -263,7 +214,7 @@ export default function Home() {
               disabled={loading || !input.trim()}
               className="bg-yellow-500 hover:bg-yellow-600 disabled:bg-gray-700 rounded-lg px-6 py-3 font-semibold text-black"
             >
-              ➤
+              Send
             </button>
           </form>
         </div>

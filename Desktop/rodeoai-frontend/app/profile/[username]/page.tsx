@@ -56,7 +56,7 @@ export default function PublicProfilePage() {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">
-          <div className="text-6xl mb-4">🐴</div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto mb-4"></div>
           <p className="text-gray-400">Loading profile...</p>
         </div>
       </div>
@@ -67,7 +67,9 @@ export default function PublicProfilePage() {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">
-          <div className="text-6xl mb-4">❌</div>
+          <svg className="w-16 h-16 mx-auto mb-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
           <h1 className="text-2xl font-bold mb-2">Profile Not Found</h1>
           <p className="text-gray-400 mb-6">{error || 'This contestant profile does not exist.'}</p>
           <button
@@ -87,7 +89,7 @@ export default function PublicProfilePage() {
       <div className="border-b border-gray-800 p-6">
         <div className="max-w-4xl mx-auto flex items-center gap-3">
           <div className="w-10 h-10 bg-yellow-500 rounded-lg flex items-center justify-center">
-            🐴
+            <span className="font-bold text-black text-lg">R</span>
           </div>
           <div>
             <h1 className="text-2xl font-bold text-yellow-500">RODEO AI</h1>
@@ -105,8 +107,10 @@ export default function PublicProfilePage() {
           <div className="p-8">
             {/* Profile Info */}
             <div className="flex items-start gap-6 -mt-16 mb-6">
-              <div className="w-24 h-24 bg-gray-900 border-4 border-gray-900 rounded-full flex items-center justify-center text-4xl">
-                🤠
+              <div className="w-24 h-24 bg-gray-900 border-4 border-gray-900 rounded-full flex items-center justify-center">
+                <svg className="w-16 h-16 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
               </div>
               <div className="flex-1 mt-16">
                 <div className="flex items-center gap-3">
@@ -160,7 +164,7 @@ export default function PublicProfilePage() {
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-lg px-4 py-2 font-semibold"
                       >
-                        📷 Instagram
+                        Instagram
                       </a>
                     )}
                     {profile.profile.facebook && (
@@ -170,7 +174,7 @@ export default function PublicProfilePage() {
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 rounded-lg px-4 py-2 font-semibold"
                       >
-                        📘 Facebook
+                        Facebook
                       </a>
                     )}
                     {profile.profile.x_twitter && (
@@ -180,7 +184,7 @@ export default function PublicProfilePage() {
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 rounded-lg px-4 py-2 font-semibold"
                       >
-                        𝕏 X (Twitter)
+                        X (Twitter)
                       </a>
                     )}
                     {profile.profile.tiktok && (
@@ -190,7 +194,7 @@ export default function PublicProfilePage() {
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 bg-black hover:bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 font-semibold"
                       >
-                        🎵 TikTok
+                        TikTok
                       </a>
                     )}
                     {profile.profile.snapchat && (
@@ -200,7 +204,7 @@ export default function PublicProfilePage() {
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-black rounded-lg px-4 py-2 font-semibold"
                       >
-                        👻 Snapchat
+                        Snapchat
                       </a>
                     )}
                     {profile.profile.youtube && (
@@ -210,7 +214,7 @@ export default function PublicProfilePage() {
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 bg-red-600 hover:bg-red-700 rounded-lg px-4 py-2 font-semibold"
                       >
-                        📺 YouTube
+                        YouTube
                       </a>
                     )}
                   </div>
