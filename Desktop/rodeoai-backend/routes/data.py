@@ -511,13 +511,133 @@ async def get_social_targets() -> Dict[str, Any]:
     }
 
 
+# --- Comprehensive Western Targets ---
+
+@router.get("/targets/all", summary="Get all western scraping targets")
+async def get_all_targets() -> Dict[str, Any]:
+    """Get comprehensive list of all western industry scraping targets."""
+    from services.scrapers.western_targets import (
+        RETAIL_CHAINS, APPAREL_BRANDS, BOOT_BRANDS, HAT_BRANDS,
+        SADDLE_BRANDS, TACK_RETAILERS, EQUIPMENT_BRANDS, MARKETPLACES,
+        LIFESTYLE_BRANDS, FEED_BRANDS, VET_PRODUCTS, HOME_DECOR,
+        TRUCK_ACCESSORIES, COMPETITION_ORGS, HORSE_SALES,
+        PEDIGREE_SOURCES, STALLION_DIRECTORIES, NEWS_SOURCES,
+        INSTAGRAM_TARGETS, TIKTOK_TARGETS, YOUTUBE_TARGETS,
+        FACEBOOK_TARGETS, REDDIT_TARGETS, FORUMS, MAJOR_VENUES,
+        get_target_summary
+    )
+
+    return {
+        "success": True,
+        "summary": get_target_summary(),
+        "ecommerce": {
+            "retail_chains": RETAIL_CHAINS,
+            "apparel_brands": APPAREL_BRANDS,
+            "boot_brands": BOOT_BRANDS,
+            "hat_brands": HAT_BRANDS,
+            "saddle_brands": SADDLE_BRANDS,
+            "tack_retailers": TACK_RETAILERS,
+            "equipment_brands": EQUIPMENT_BRANDS,
+            "marketplaces": MARKETPLACES
+        },
+        "lifestyle": {
+            "lifestyle_brands": LIFESTYLE_BRANDS,
+            "feed_brands": FEED_BRANDS,
+            "vet_products": VET_PRODUCTS,
+            "home_decor": HOME_DECOR,
+            "truck_accessories": TRUCK_ACCESSORIES
+        },
+        "competition": {
+            "organizations": COMPETITION_ORGS,
+            "horse_sales": HORSE_SALES,
+            "pedigree_sources": PEDIGREE_SOURCES,
+            "stallion_directories": STALLION_DIRECTORIES
+        },
+        "media": {
+            "news_sources": NEWS_SOURCES,
+            "forums": FORUMS,
+            "venues": MAJOR_VENUES
+        },
+        "social": {
+            "instagram": INSTAGRAM_TARGETS,
+            "tiktok": TIKTOK_TARGETS,
+            "youtube": YOUTUBE_TARGETS,
+            "facebook": FACEBOOK_TARGETS,
+            "reddit": REDDIT_TARGETS
+        }
+    }
+
+
+@router.get("/targets/retail", summary="Get retail targets")
+async def get_retail_targets() -> Dict[str, Any]:
+    """Get all retail/e-commerce scraping targets."""
+    from services.scrapers.western_targets import (
+        RETAIL_CHAINS, APPAREL_BRANDS, BOOT_BRANDS, HAT_BRANDS,
+        SADDLE_BRANDS, TACK_RETAILERS, EQUIPMENT_BRANDS, MARKETPLACES
+    )
+
+    return {
+        "success": True,
+        "retail_chains": RETAIL_CHAINS,
+        "apparel_brands": APPAREL_BRANDS,
+        "boot_brands": BOOT_BRANDS,
+        "hat_brands": HAT_BRANDS,
+        "saddle_brands": SADDLE_BRANDS,
+        "tack_retailers": TACK_RETAILERS,
+        "equipment_brands": EQUIPMENT_BRANDS,
+        "marketplaces": MARKETPLACES,
+        "total_sources": (
+            len(RETAIL_CHAINS) + len(APPAREL_BRANDS) + len(BOOT_BRANDS) +
+            len(HAT_BRANDS) + len(SADDLE_BRANDS) + len(TACK_RETAILERS) +
+            len(EQUIPMENT_BRANDS) + len(MARKETPLACES)
+        )
+    }
+
+
+@router.get("/targets/social", summary="Get social media targets")
+async def get_social_media_targets() -> Dict[str, Any]:
+    """Get all social media scraping targets."""
+    from services.scrapers.western_targets import (
+        INSTAGRAM_TARGETS, TIKTOK_TARGETS, YOUTUBE_TARGETS,
+        FACEBOOK_TARGETS, REDDIT_TARGETS
+    )
+
+    return {
+        "success": True,
+        "instagram": INSTAGRAM_TARGETS,
+        "tiktok": TIKTOK_TARGETS,
+        "youtube": YOUTUBE_TARGETS,
+        "facebook": FACEBOOK_TARGETS,
+        "reddit": REDDIT_TARGETS
+    }
+
+
+@router.get("/targets/competition", summary="Get competition data targets")
+async def get_competition_targets() -> Dict[str, Any]:
+    """Get all competition/horse data scraping targets."""
+    from services.scrapers.western_targets import (
+        COMPETITION_ORGS, HORSE_SALES, PEDIGREE_SOURCES, STALLION_DIRECTORIES
+    )
+
+    return {
+        "success": True,
+        "organizations": COMPETITION_ORGS,
+        "horse_sales": HORSE_SALES,
+        "pedigree_sources": PEDIGREE_SOURCES,
+        "stallion_directories": STALLION_DIRECTORIES
+    }
+
+
 # --- Health Check ---
 
 @router.get("/health", summary="Data scraping health")
 async def data_health() -> Dict[str, Any]:
     """Check data scraping service status."""
+    from services.scrapers.western_targets import get_target_summary
+
     return {
         "status": "ok",
+        "target_summary": get_target_summary(),
         "capabilities": [
             "ecommerce_scraping",
             "competition_results",
@@ -525,8 +645,9 @@ async def data_health() -> Dict[str, Any]:
             "horse_sales",
             "pedigree_lookup",
             "listing_search",
-            "social_targets"
+            "social_targets",
+            "comprehensive_targets"
         ],
         "ecommerce_sources": ["boot_barn", "cavenders", "ariat", "wrangler", "state_line_tack"],
-        "competition_sources": ["ncha", "nrcha"]
+        "competition_sources": ["ncha", "nrcha", "nrha", "aqha"]
     }
