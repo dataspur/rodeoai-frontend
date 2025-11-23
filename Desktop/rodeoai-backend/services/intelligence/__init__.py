@@ -6,9 +6,11 @@ from .extraction import (
     EngagementScraper,
     PoliticalAnalyzer,
     BrandAffinityAnalyzer,
-    HiddenDataExtractor
+    HiddenDataExtractor,
+    SponsoredContentDetector,
+    AudiencePersonaBuilder
 )
-from .service import IntelligenceService
+from .service import IntelligenceService, get_intelligence_service
 
 __all__ = [
     "UserEngagement",
@@ -18,5 +20,8 @@ __all__ = [
     "PoliticalAnalyzer",
     "BrandAffinityAnalyzer",
     "HiddenDataExtractor",
-    "IntelligenceService"
+    "SponsoredContentDetector",
+    "AudiencePersonaBuilder",
+    "IntelligenceService",
+    "get_intelligence_service"
 ]

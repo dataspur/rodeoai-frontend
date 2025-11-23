@@ -940,3 +940,311 @@ class HiddenDataExtractor:
             "detected_cities": [],  # Could be expanded
             "timezone_guess": location_hints[0] if location_hints else "unknown"
         }
+
+
+class SponsoredContentDetector:
+    """
+    Detects sponsored/paid content and brand partnerships.
+    """
+
+    # FTC disclosure keywords
+    DISCLOSURE_PATTERNS = [
+        r"#ad\b", r"#sponsored", r"#paid", r"#partner",
+        r"#brandpartner", r"#brandambassador", r"#ambassador",
+        r"#gifted", r"#promo", r"#collab\b", r"#collaboration",
+        r"paid partnership", r"sponsored by", r"in partnership with",
+        r"thanks to .* for", r"partnered with", r"working with",
+        r"#rodeoambassador", r"#teamwrangler", r"#teamariat",
+        r"#teamcavenders", r"#teambootbarn", r"#teamstetson",
+        r"#teamresistol", r"#teamlucchese", r"#teamtecovas"
+    ]
+
+    # Western brand partnership indicators
+    WESTERN_PARTNERSHIP_TAGS = {
+        "wrangler": ["#wrangler", "#wranglernfr", "#teamwrangler", "#wranglercowboy"],
+        "ariat": ["#ariat", "#ariatinternational", "#teamariat", "#ariatcountry"],
+        "resistol": ["#resistol", "#resistolhats", "#teamresistol"],
+        "stetson": ["#stetson", "#stetsonhat", "#teamstetson"],
+        "cavenders": ["#cavenders", "#teamcavenders"],
+        "bootbarn": ["#bootbarn", "#teambootbarn"],
+        "lucchese": ["#lucchese", "#teamlucchese"],
+        "tecovas": ["#tecovas", "#teamtecovas"],
+        "cinch": ["#cinch", "#cinchcowboy", "#teamcinch"],
+        "hooey": ["#hooey", "#teamhooey", "#hooeyco"],
+        "pbr": ["#pbr", "#pbrambassador", "#teampbr"],
+        "prca": ["#prca", "#prorodeo", "#prcaambassador"]
+    }
+
+    def detect_sponsored_content(self, posts: List[Dict]) -> Dict[str, Any]:
+        """
+        Analyze posts for sponsored content indicators.
+        """
+        sponsored_posts = []
+        brand_partnerships = Counter()
+        disclosure_types = Counter()
+
+        for post in posts:
+            content = post.get("content", "").lower()
+            post_id = post.get("id", "unknown")
+            is_sponsored = False
+            detected_brands = []
+            detected_disclosures = []
+
+            # Check disclosure patterns
+            for pattern in self.DISCLOSURE_PATTERNS:
+                if re.search(pattern, content, re.IGNORECASE):
+                    is_sponsored = True
+                    detected_disclosures.append(pattern.replace(r"\b", "").replace("#", ""))
+
+            # Check brand-specific partnership tags
+            for brand, tags in self.WESTERN_PARTNERSHIP_TAGS.items():
+                for tag in tags:
+                    if tag in content:
+                        detected_brands.append(brand)
+                        brand_partnerships[brand] += 1
+                        if "team" in tag:
+                            is_sponsored = True
+
+            if is_sponsored:
+                sponsored_posts.append({
+                    "post_id": post_id,
+                    "content_preview": content[:150],
+                    "brands_detected": list(set(detected_brands)),
+                    "disclosures": list(set(detected_disclosures))
+                })
+
+            for disclosure in detected_disclosures:
+                disclosure_types[disclosure] += 1
+
+        # Calculate sponsorship rate
+        sponsorship_rate = len(sponsored_posts) / max(len(posts), 1) * 100
+
+        # Identify likely brand ambassadors
+        likely_ambassadors = []
+        for brand, count in brand_partnerships.items():
+            if count >= 3:  # Multiple posts with same brand
+                likely_ambassadors.append({
+                    "brand": brand,
+                    "post_count": count,
+                    "confidence": "high" if count >= 5 else "medium"
+                })
+
+        return {
+            "total_posts_analyzed": len(posts),
+            "sponsored_posts_count": len(sponsored_posts),
+            "sponsorship_rate": round(sponsorship_rate, 1),
+            "sponsored_posts": sponsored_posts[:20],  # Limit response
+            "brand_partnerships": dict(brand_partnerships.most_common(10)),
+            "disclosure_types": dict(disclosure_types),
+            "likely_brand_ambassadors": likely_ambassadors,
+            "is_likely_influencer": len(likely_ambassadors) > 0 or sponsorship_rate > 10
+        }
+
+    def analyze_partnership_value(
+        self,
+        posts: List[Dict],
+        follower_count: int
+    ) -> Dict[str, Any]:
+        """
+        Estimate partnership value based on engagement and sponsorship patterns.
+        """
+        sponsored = self.detect_sponsored_content(posts)
+
+        # Calculate average engagement on sponsored posts
+        total_engagement = 0
+        for post in posts:
+            likes = post.get("likes", 0) or 0
+            comments = post.get("comments", 0) or 0
+            total_engagement += likes + comments
+
+        avg_engagement = total_engagement / max(len(posts), 1)
+        engagement_rate = (avg_engagement / max(follower_count, 1)) * 100
+
+        # Estimate CPM (cost per mille) based on niche
+        # Western/rodeo niche commands premium rates
+        base_cpm = 15  # $15 base CPM for western niche
+        if engagement_rate >= 5:
+            cpm_multiplier = 2.0
+        elif engagement_rate >= 3:
+            cpm_multiplier = 1.5
+        elif engagement_rate >= 1:
+            cpm_multiplier = 1.0
+        else:
+            cpm_multiplier = 0.7
+
+        estimated_cpm = base_cpm * cpm_multiplier
+
+        # Estimate post value
+        estimated_post_value = (follower_count / 1000) * estimated_cpm
+
+        return {
+            "follower_count": follower_count,
+            "avg_engagement": round(avg_engagement, 1),
+            "engagement_rate": round(engagement_rate, 2),
+            "sponsorship_rate": sponsored["sponsorship_rate"],
+            "brand_partnerships": sponsored["brand_partnerships"],
+            "estimated_cpm": round(estimated_cpm, 2),
+            "estimated_post_value": round(estimated_post_value, 2),
+            "partnership_tier": self._get_partnership_tier(follower_count, engagement_rate)
+        }
+
+    def _get_partnership_tier(self, followers: int, engagement_rate: float) -> str:
+        if followers >= 500000 and engagement_rate >= 2:
+            return "premium_ambassador"
+        elif followers >= 100000 and engagement_rate >= 3:
+            return "brand_ambassador"
+        elif followers >= 25000 and engagement_rate >= 4:
+            return "sponsored_athlete"
+        elif followers >= 10000 and engagement_rate >= 5:
+            return "micro_influencer"
+        else:
+            return "affiliate"
+
+
+class AudiencePersonaBuilder:
+    """
+    Builds audience personas from follower analysis.
+    """
+
+    PERSONA_TEMPLATES = {
+        "ranch_hand": {
+            "description": "Working cowboy/cowgirl, practical focus",
+            "indicators": ["ranch", "cattle", "horse", "work", "dawn", "chores"],
+            "brands": ["ariat", "wrangler", "carhartt", "yeti"],
+            "age_range": "25-45",
+            "income_bracket": "middle"
+        },
+        "rodeo_competitor": {
+            "description": "Active rodeo athlete or enthusiast",
+            "indicators": ["rodeo", "roping", "barrel", "bronc", "bull", "compete", "prca", "pbr"],
+            "brands": ["classicropes", "cactusropes", "resistol", "cinch"],
+            "age_range": "18-35",
+            "income_bracket": "varies"
+        },
+        "western_fashion": {
+            "description": "Style-focused western aesthetic",
+            "indicators": ["outfit", "style", "fashion", "boots", "hat", "look"],
+            "brands": ["lucchese", "tecovas", "txstandard", "doubledranch"],
+            "age_range": "22-40",
+            "income_bracket": "upper-middle"
+        },
+        "country_lifestyle": {
+            "description": "Rural/country living enthusiast",
+            "indicators": ["country", "rural", "farm", "land", "truck", "hunting", "fishing"],
+            "brands": ["yeti", "traeger", "carhartt", "filson", "kodiak"],
+            "age_range": "30-55",
+            "income_bracket": "middle"
+        },
+        "yellowstone_fan": {
+            "description": "Western media/entertainment fan",
+            "indicators": ["yellowstone", "1883", "dutton", "rip", "beth", "sheridan"],
+            "brands": ["yellowstone", "wrangler", "stetson"],
+            "age_range": "35-60",
+            "income_bracket": "middle"
+        },
+        "weekend_cowboy": {
+            "description": "Urban professional with western interests",
+            "indicators": ["weekend", "concert", "nashville", "country music", "festival"],
+            "brands": ["bootbarn", "cavenders", "tecovas"],
+            "age_range": "25-45",
+            "income_bracket": "upper-middle"
+        }
+    }
+
+    def build_persona(self, posts: List[Dict], following: List[str], bio: str = "") -> Dict[str, Any]:
+        """
+        Build an audience persona based on content and behavior.
+        """
+        persona_scores = Counter()
+
+        all_text = bio.lower() + " "
+        for post in posts:
+            all_text += post.get("content", "").lower() + " "
+
+        following_lower = {f.lower() for f in following}
+
+        for persona_name, persona_data in self.PERSONA_TEMPLATES.items():
+            score = 0
+
+            # Check indicators in content
+            for indicator in persona_data["indicators"]:
+                count = all_text.count(indicator)
+                score += min(count, 5)  # Cap at 5 per indicator
+
+            # Check brands followed
+            for brand in persona_data["brands"]:
+                if brand in following_lower:
+                    score += 3
+
+            persona_scores[persona_name] = score
+
+        # Get primary and secondary personas
+        ranked = persona_scores.most_common()
+        primary_persona = ranked[0][0] if ranked and ranked[0][1] > 0 else "general_western"
+        secondary_persona = ranked[1][0] if len(ranked) > 1 and ranked[1][1] > 0 else None
+
+        primary_data = self.PERSONA_TEMPLATES.get(primary_persona, {})
+
+        return {
+            "primary_persona": primary_persona,
+            "primary_description": primary_data.get("description", "General western enthusiast"),
+            "secondary_persona": secondary_persona,
+            "persona_scores": dict(persona_scores),
+            "likely_age_range": primary_data.get("age_range", "unknown"),
+            "income_bracket": primary_data.get("income_bracket", "unknown"),
+            "recommended_brands": primary_data.get("brands", []),
+            "content_indicators": self._extract_top_indicators(all_text)
+        }
+
+    def _extract_top_indicators(self, text: str) -> List[str]:
+        """Extract most frequent western-related keywords."""
+        western_keywords = [
+            "rodeo", "cowboy", "western", "ranch", "horse", "boots", "hat",
+            "roping", "barrel", "bull", "bronc", "country", "rural",
+            "yellowstone", "wrangler", "stetson", "ariat", "nfr", "pbr"
+        ]
+
+        found = Counter()
+        for kw in western_keywords:
+            count = text.count(kw)
+            if count > 0:
+                found[kw] = count
+
+        return [kw for kw, _ in found.most_common(10)]
+
+    def segment_audience(self, user_profiles: List[Dict]) -> Dict[str, Any]:
+        """
+        Segment a list of users into persona groups.
+        """
+        segments = {name: [] for name in self.PERSONA_TEMPLATES.keys()}
+        segments["general_western"] = []
+
+        for profile in user_profiles:
+            posts = profile.get("posts", [])
+            following = profile.get("following", [])
+            bio = profile.get("bio", "")
+            username = profile.get("username", "unknown")
+
+            persona = self.build_persona(posts, following, bio)
+            primary = persona["primary_persona"]
+
+            if primary in segments:
+                segments[primary].append(username)
+            else:
+                segments["general_western"].append(username)
+
+        # Calculate percentages
+        total = len(user_profiles)
+        distribution = {}
+        for segment, users in segments.items():
+            distribution[segment] = {
+                "count": len(users),
+                "percentage": round(len(users) / max(total, 1) * 100, 1),
+                "sample_users": users[:10]
+            }
+
+        return {
+            "total_users": total,
+            "segments": distribution,
+            "largest_segment": max(segments.keys(), key=lambda k: len(segments[k])) if segments else None
+        }
