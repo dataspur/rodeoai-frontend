@@ -7,11 +7,12 @@ import sys
 
 # Import scraping routes
 from routes.scraping import router as scraping_router
+from routes.bulk_scraping import router as bulk_scraping_router
 
 app = FastAPI(
     title="RodeoAI API",
-    description="AI Chat and Social Media Scraping API",
-    version="1.0.0"
+    description="AI Chat and High-Volume Social Media Scraping API",
+    version="2.0.0"
 )
 
 app.add_middleware(
@@ -37,6 +38,24 @@ class ChatRequest(BaseModel):
 
 # Include scraping routes
 app.include_router(scraping_router)
+app.include_router(bulk_scraping_router)
+
+
+# Startup/shutdown events for bulk engine
+@app.on_event("startup")
+async def startup_event():
+    """Initialize the bulk scraping engine on startup."""
+    from services.bulk_engine import get_engine
+    await get_engine()
+    print("Bulk scraping engine initialized")
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Cleanup on shutdown."""
+    from services.bulk_engine import shutdown_engine
+    await shutdown_engine()
+    print("Bulk scraping engine shutdown")
 
 
 @app.get("/")
