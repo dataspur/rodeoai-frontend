@@ -592,12 +592,251 @@ MAJOR_VENUES = {
 }
 
 # ============================================================================
+# WESTERN JEWELRY & ACCESSORIES
+# ============================================================================
+
+JEWELRY_BRANDS = {
+    "montana_silversmiths": {"name": "Montana Silversmiths", "url": "https://www.montanasilversmiths.com", "category": "buckles_jewelry"},
+    "gist_silversmiths": {"name": "Gist Silversmiths", "url": "https://www.gistsilversmiths.com", "category": "buckles"},
+    "vogt_silversmiths": {"name": "Vogt Silversmiths", "url": "https://www.vogtsilversmith.com", "category": "buckles"},
+    "comstock_heritage": {"name": "Comstock Heritage", "url": "https://www.comstockheritage.com", "category": "premium_buckles"},
+    "fleming_sterling": {"name": "Fleming Sterling", "url": "https://www.flemingsterling.com", "category": "custom"},
+    "clint_orms": {"name": "Clint Orms", "url": "https://www.clintorms.com", "category": "custom"},
+    "andy_barker": {"name": "Andy Barker Buckles", "url": "https://www.andybarkerbuckles.com", "category": "rodeo_buckles"},
+    "nocona_belt": {"name": "Nocona Belt Company", "url": "https://www.noconabelt.com", "category": "belts"},
+    "double_s_belt": {"name": "Double S Belt Company", "url": "https://www.doublesbelts.com", "category": "belts"}
+}
+
+# ============================================================================
+# WESTERN WORK/RANCH WEAR
+# ============================================================================
+
+WORKWEAR_BRANDS = {
+    "ranch_hand_supply": {"name": "Ranch Hand Supply", "url": "https://www.ranchhandsupply.com"},
+    "nrs_world": {"name": "NRS World", "url": "https://www.nrsworld.com"},
+    "duluth_trading": {"name": "Duluth Trading", "url": "https://www.duluthtrading.com", "crossover": True},
+    "key_industries": {"name": "Key Industries", "url": "https://www.keyindustries.com"},
+    "walls_workwear": {"name": "Walls Workwear", "url": "https://www.walls.com"},
+    "red_kap": {"name": "Red Kap", "url": "https://www.redkap.com"},
+    "dickies": {"name": "Dickies", "url": "https://www.dickies.com", "crossover": True}
+}
+
+# ============================================================================
+# WOMEN'S WESTERN FASHION
+# ============================================================================
+
+WOMENS_BRANDS = {
+    "double_d_ranch": {"name": "Double D Ranch", "url": "https://www.doubledranchstyle.com", "tier": "premium"},
+    "scully_leather": {"name": "Scully Leather", "url": "https://www.scullyleather.com", "tier": "premium"},
+    "tasha_polizzi": {"name": "Tasha Polizzi", "url": "https://www.tashapolizzi.com", "tier": "premium"},
+    "ryan_michael": {"name": "Ryan Michael", "url": "https://www.ryanmichaelstudio.com", "tier": "premium"},
+    "honey_creek": {"name": "Honey Creek", "url": "https://www.honeycreekbyhc.com", "tier": "mid"},
+    "patricia_wolf": {"name": "Patricia Wolf", "url": "https://www.patriciawolf.com", "tier": "premium"},
+    "cripple_creek": {"name": "Cripple Creek", "url": "https://www.cripplecreekleather.com", "tier": "mid"}
+}
+
+# ============================================================================
+# WESTERN KIDS/YOUTH
+# ============================================================================
+
+KIDS_BRANDS = {
+    "roper_kids": {"name": "Roper Kids", "url": "https://www.roperapparel.com/kids"},
+    "wrangler_kids": {"name": "Wrangler Kids", "url": "https://www.wrangler.com/kids"},
+    "ariat_kids": {"name": "Ariat Kids", "url": "https://www.ariat.com/kids"},
+    "cruel_girl_youth": {"name": "Cruel Girl Youth", "url": "https://www.cruelgirl.com/youth"},
+    "justin_kids": {"name": "Justin Kids", "url": "https://www.justinboots.com/kids"},
+    "tin_haul_kids": {"name": "Tin Haul Kids", "url": "https://www.tinhaul.com/kids"}
+}
+
+# ============================================================================
+# CASUAL WESTERN FOOTWEAR
+# ============================================================================
+
+CASUAL_FOOTWEAR = {
+    "twisted_x": {"name": "Twisted X", "url": "https://www.twistedx.com", "category": "casual"},
+    "ariat_cruisers": {"name": "Ariat Cruisers", "url": "https://www.ariat.com/cruisers", "category": "casual"},
+    "hey_dude": {"name": "Hey Dude", "url": "https://www.heydude.com", "category": "crossover"},
+    "georgia_boot": {"name": "Georgia Boot", "url": "https://www.georgiaboot.com", "category": "work"},
+    "irish_setter": {"name": "Irish Setter", "url": "https://www.irishsetterboots.com", "category": "outdoor"}
+}
+
+# ============================================================================
+# GLOVES & HAND PROTECTION
+# ============================================================================
+
+GLOVE_BRANDS = {
+    "wells_lamont": {"name": "Wells Lamont", "url": "https://www.wellslamont.com"},
+    "ironclad": {"name": "Ironclad", "url": "https://www.ironcladperformancewear.com"},
+    "carhartt_gloves": {"name": "Carhartt Gloves", "url": "https://www.carhartt.com/gloves"},
+    "noble_outfitters": {"name": "Noble Outfitters", "url": "https://www.nobleoutfitters.com"}
+}
+
+# ============================================================================
+# SUNGLASSES & EYEWEAR
+# ============================================================================
+
+EYEWEAR_BRANDS = {
+    "costa": {"name": "Costa", "url": "https://www.costadelmar.com"},
+    "oakley": {"name": "Oakley", "url": "https://www.oakley.com"},
+    "hobie": {"name": "Hobie", "url": "https://www.hobiesunglasses.com"},
+    "native_eyewear": {"name": "Native Eyewear", "url": "https://www.nativeyewear.com"}
+}
+
+# ============================================================================
+# COOLERS & DRINKWARE
+# ============================================================================
+
+COOLER_BRANDS = {
+    "yeti": {"name": "YETI", "url": "https://www.yeti.com", "tier": "premium"},
+    "rtic": {"name": "RTIC", "url": "https://www.rticcoolers.com", "tier": "value"},
+    "orca": {"name": "Orca", "url": "https://www.orcacoolers.com", "tier": "premium"},
+    "pelican": {"name": "Pelican", "url": "https://www.pelican.com", "tier": "premium"},
+    "engel": {"name": "Engel", "url": "https://www.engelcoolers.com", "tier": "mid"},
+    "grizzly": {"name": "Grizzly", "url": "https://www.grizzlycoolers.com", "tier": "mid"}
+}
+
+# ============================================================================
+# WATCHES
+# ============================================================================
+
+WATCH_BRANDS = {
+    "shinola": {"name": "Shinola", "url": "https://www.shinola.com", "style": "heritage"},
+    "nixon": {"name": "Nixon", "url": "https://www.nixon.com", "style": "lifestyle"},
+    "fossil": {"name": "Fossil", "url": "https://www.fossil.com", "style": "fashion"},
+    "timex": {"name": "Timex Expedition", "url": "https://www.timex.com", "style": "outdoor"}
+}
+
+# ============================================================================
+# KNIVES & TOOLS
+# ============================================================================
+
+KNIFE_BRANDS = {
+    "case_knives": {"name": "Case Knives", "url": "https://www.caseknives.com"},
+    "buck_knives": {"name": "Buck Knives", "url": "https://www.buckknives.com"},
+    "benchmade": {"name": "Benchmade", "url": "https://www.benchmade.com"},
+    "leatherman": {"name": "Leatherman", "url": "https://www.leatherman.com"},
+    "victorinox": {"name": "Victorinox", "url": "https://www.victorinox.com"}
+}
+
+# ============================================================================
+# GROOMING & FRAGRANCE
+# ============================================================================
+
+GROOMING_BRANDS = {
+    "duke_cannon": {"name": "Duke Cannon", "url": "https://www.dukecannon.com"},
+    "dr_squatch": {"name": "Dr. Squatch", "url": "https://www.drsquatch.com"},
+    "cowboy_magic": {"name": "Cowboy Magic", "url": "https://www.cowboymagic.com"}
+}
+
+# ============================================================================
+# TRAILER MANUFACTURERS
+# ============================================================================
+
+TRAILER_BRANDS = {
+    "sundowner": {"name": "Sundowner Trailers", "url": "https://www.sundownertrailer.com"},
+    "featherlite": {"name": "Featherlite Trailers", "url": "https://www.fthr.com"},
+    "exiss": {"name": "Exiss Trailers", "url": "https://www.exiss.com"},
+    "4_star": {"name": "4-Star Trailers", "url": "https://www.4startrailers.com"},
+    "trails_west": {"name": "Trails West", "url": "https://www.trailswest.com"},
+    "logan_coach": {"name": "Logan Coach", "url": "https://www.logancoach.com"}
+}
+
+# ============================================================================
+# ATV/UTV BRANDS
+# ============================================================================
+
+UTV_BRANDS = {
+    "polaris": {"name": "Polaris", "url": "https://www.polaris.com"},
+    "can_am": {"name": "Can-Am", "url": "https://www.can-am.brp.com"},
+    "kawasaki_mule": {"name": "Kawasaki Mule", "url": "https://www.kawasaki.com"},
+    "honda_pioneer": {"name": "Honda Pioneer", "url": "https://www.honda.com"},
+    "yamaha_wolverine": {"name": "Yamaha Wolverine", "url": "https://www.yamahamotorsports.com"}
+}
+
+# ============================================================================
+# FENCING & RANCH SUPPLIES
+# ============================================================================
+
+FENCING_BRANDS = {
+    "red_brand": {"name": "Red Brand Fence", "url": "https://www.redbrand.com"},
+    "ok_brand": {"name": "OK Brand", "url": "https://www.okbrand.com"},
+    "bekaert": {"name": "Bekaert", "url": "https://www.bekaert.com"},
+    "tarter": {"name": "Tarter Gate", "url": "https://www.tartergate.com"}
+}
+
+# ============================================================================
+# OUTDOOR/CAMPING (WESTERN CROSSOVER)
+# ============================================================================
+
+OUTDOOR_BRANDS = {
+    "coleman": {"name": "Coleman", "url": "https://www.coleman.com"},
+    "cabelas": {"name": "Cabela's", "url": "https://www.cabelas.com"},
+    "bass_pro": {"name": "Bass Pro Shops", "url": "https://www.basspro.com"},
+    "rei": {"name": "REI", "url": "https://www.rei.com"},
+    "sportsmans_warehouse": {"name": "Sportsman's Warehouse", "url": "https://www.sportsmanswarehouse.com"},
+    "academy": {"name": "Academy Sports", "url": "https://www.academy.com"},
+    "scheels": {"name": "Scheels", "url": "https://www.scheels.com"}
+}
+
+# ============================================================================
+# WESTERN REAL ESTATE
+# ============================================================================
+
+REAL_ESTATE_SITES = {
+    "landwatch": {"name": "LandWatch", "url": "https://www.landwatch.com"},
+    "land_and_farm": {"name": "Land And Farm", "url": "https://www.landandfarm.com"},
+    "united_country": {"name": "United Country", "url": "https://www.unitedcountry.com"}
+}
+
+# ============================================================================
+# HORSE CLASSIFIEDS
+# ============================================================================
+
+HORSE_CLASSIFIEDS = {
+    "dreamhorse": {"name": "DreamHorse", "url": "https://www.dreamhorse.com"},
+    "equine_com": {"name": "Equine.com", "url": "https://www.equine.com"},
+    "horseclicks": {"name": "HorseClicks", "url": "https://www.horseclicks.com"},
+    "horse_finder": {"name": "The Horse Finder", "url": "https://www.thehorsefinder.com"},
+    "equine_now": {"name": "EquineNow", "url": "https://www.equinenow.com"}
+}
+
+# ============================================================================
+# WESTERN PET PRODUCTS
+# ============================================================================
+
+PET_BRANDS = {
+    "ruffwear": {"name": "Ruffwear", "url": "https://www.ruffwear.com"},
+    "carhartt_pet": {"name": "Carhartt Pet", "url": "https://www.carhartt.com/pet"},
+    "kurgo": {"name": "Kurgo", "url": "https://www.kurgo.com"}
+}
+
+# ============================================================================
+# TRADE SHOWS & EXPOS
+# ============================================================================
+
+TRADE_SHOWS = {
+    "equine_affaire": {"name": "Equine Affaire", "url": "https://www.equineaffaire.com"},
+    "qh_congress": {"name": "Quarter Horse Congress", "url": "https://www.qhcongress.com"},
+    "western_states_expo": {"name": "Western States Horse Expo", "url": "https://www.horsexpo.com"},
+    "midwest_horse_fair": {"name": "Midwest Horse Fair", "url": "https://www.midwesthorsefair.com"}
+}
+
+# ============================================================================
+# SUBSCRIPTION BOXES
+# ============================================================================
+
+SUBSCRIPTION_BOXES = {
+    "horsebox": {"name": "Horsebox", "url": "https://www.horseboxgifts.com", "category": "equine"}
+}
+
+# ============================================================================
 # SUMMARY STATISTICS
 # ============================================================================
 
 def get_target_summary():
     """Get summary of all scraping targets."""
     return {
+        # Core Retail
         "retail_chains": len(RETAIL_CHAINS),
         "apparel_brands": len(APPAREL_BRANDS),
         "boot_brands": len(BOOT_BRANDS),
@@ -606,17 +845,66 @@ def get_target_summary():
         "tack_retailers": len(TACK_RETAILERS),
         "equipment_brands": len(EQUIPMENT_BRANDS),
         "marketplaces": len(MARKETPLACES),
+
+        # Lifestyle & Accessories
         "lifestyle_brands": len(LIFESTYLE_BRANDS),
+        "jewelry_brands": len(JEWELRY_BRANDS),
+        "workwear_brands": len(WORKWEAR_BRANDS),
+        "womens_brands": len(WOMENS_BRANDS),
+        "kids_brands": len(KIDS_BRANDS),
+        "casual_footwear": len(CASUAL_FOOTWEAR),
+        "glove_brands": len(GLOVE_BRANDS),
+        "eyewear_brands": len(EYEWEAR_BRANDS),
+        "cooler_brands": len(COOLER_BRANDS),
+        "watch_brands": len(WATCH_BRANDS),
+        "knife_brands": len(KNIFE_BRANDS),
+        "grooming_brands": len(GROOMING_BRANDS),
+
+        # Equipment & Vehicles
+        "trailer_brands": len(TRAILER_BRANDS),
+        "utv_brands": len(UTV_BRANDS),
+        "fencing_brands": len(FENCING_BRANDS),
+        "outdoor_brands": len(OUTDOOR_BRANDS),
+
+        # Horse Industry
         "feed_brands": len(FEED_BRANDS),
         "vet_products": len(VET_PRODUCTS),
         "competition_orgs": len(COMPETITION_ORGS),
         "horse_sales": len(HORSE_SALES),
+        "horse_classifieds": len(HORSE_CLASSIFIEDS),
+        "pet_brands": len(PET_BRANDS),
+
+        # Media & Events
         "news_sources": len(NEWS_SOURCES),
         "forums": len(FORUMS),
         "venues": len(MAJOR_VENUES),
+        "trade_shows": len(TRADE_SHOWS),
+        "real_estate_sites": len(REAL_ESTATE_SITES),
+
+        # Social Media
         "instagram_accounts": sum(len(v) for v in INSTAGRAM_TARGETS["accounts"].values()),
         "instagram_hashtags": sum(len(v) for v in INSTAGRAM_TARGETS["hashtags"].values()),
         "facebook_groups": len(FACEBOOK_TARGETS["groups"]),
         "youtube_channels": len(YOUTUBE_TARGETS["channels"]),
-        "reddit_subs": len(REDDIT_TARGETS)
+        "reddit_subs": len(REDDIT_TARGETS),
+        "tiktok_terms": len(TIKTOK_TARGETS.get("search_terms", [])),
+
+        # Totals
+        "total_retail_sources": (
+            len(RETAIL_CHAINS) + len(APPAREL_BRANDS) + len(BOOT_BRANDS) +
+            len(HAT_BRANDS) + len(SADDLE_BRANDS) + len(TACK_RETAILERS) +
+            len(EQUIPMENT_BRANDS) + len(MARKETPLACES) + len(JEWELRY_BRANDS) +
+            len(WORKWEAR_BRANDS) + len(WOMENS_BRANDS) + len(KIDS_BRANDS) +
+            len(CASUAL_FOOTWEAR) + len(LIFESTYLE_BRANDS) + len(COOLER_BRANDS) +
+            len(OUTDOOR_BRANDS)
+        ),
+        "total_equipment_sources": (
+            len(TRAILER_BRANDS) + len(UTV_BRANDS) + len(FENCING_BRANDS) +
+            len(GLOVE_BRANDS) + len(EYEWEAR_BRANDS) + len(WATCH_BRANDS) +
+            len(KNIFE_BRANDS) + len(GROOMING_BRANDS)
+        ),
+        "total_horse_industry_sources": (
+            len(COMPETITION_ORGS) + len(HORSE_SALES) + len(HORSE_CLASSIFIEDS) +
+            len(FEED_BRANDS) + len(VET_PRODUCTS) + len(PET_BRANDS)
+        )
     }
