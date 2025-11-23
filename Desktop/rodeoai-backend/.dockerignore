@@ -1,0 +1,55 @@
+# ===========================================
+# RodeoAI Backend .dockerignore
+# ===========================================
+
+# Git
+.git
+.gitignore
+
+# Environment
+.env
+.env.*
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+venv/
+env/
+.venv/
+*.egg-info
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+tests/
+
+# Documentation
+*.md
+docs/
+
+# Data and logs
+logs/
+data/
+screenshots/
+*.log
+*.db
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Scripts (not needed in container)
+# scripts/
+
+# OS
+.DS_Store
+Thumbs.db

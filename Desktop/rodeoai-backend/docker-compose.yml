@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  # RodeoAI Backend API
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development  # Use 'production' for prod deployments
+    container_name: rodeoai-backend
+    ports:
+      - "${PORT:-8000}:8000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - CORS_ORIGINS=${CORS_ORIGINS:-*}
+      - RATE_LIMIT_REQUESTS=${RATE_LIMIT_REQUESTS:-100}
+      - RATE_LIMIT_PERIOD=${RATE_LIMIT_PERIOD:-60}
+      - SCRAPE_TIMEOUT=${SCRAPE_TIMEOUT:-30}
+      - SCRAPE_HEADLESS=${SCRAPE_HEADLESS:-true}
+    volumes:
+      # Mount source code for hot reload in development
+      - .:/app
+      # Persist Playwright browser cache
+      - playwright-cache:/root/.cache/ms-playwright
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Redis for caching (optional - uncomment to use)
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: rodeoai-redis
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis-data:/data
+  #   restart: unless-stopped
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+
+volumes:
+  playwright-cache:
+  # redis-data:
+
+networks:
+  default:
+    name: rodeoai-network
