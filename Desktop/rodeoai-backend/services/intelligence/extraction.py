@@ -171,12 +171,50 @@ class EngagementScraper:
 
     # Known brand accounts (expandable)
     KNOWN_BRANDS = {
+        # Tech
         "nike", "adidas", "apple", "google", "amazon", "microsoft", "meta", "tesla",
         "coca-cola", "pepsi", "mcdonalds", "starbucks", "walmart", "target",
         "netflix", "disney", "spotify", "uber", "airbnb", "samsung", "sony",
         "bmw", "mercedes", "toyota", "ford", "chevrolet", "honda",
         "gucci", "louisvuitton", "chanel", "prada", "supreme", "yeezy",
-        "nfl", "nba", "mlb", "nhl", "espn", "foxsports", "bleacherreport"
+        "nfl", "nba", "mlb", "nhl", "espn", "foxsports", "bleacherreport",
+
+        # Western Wear - Boots
+        "lucchese", "tecovas", "ariat", "justinboots", "tonylamaboots", "andersonbean",
+        "oldgringoboots", "corralboots", "danhpost", "laredo", "durango", "twistex",
+        "cavenders", "bootbarn", "sheplers",
+
+        # Western Wear - Hats
+        "resistol", "stetson", "americanhatco", "prohats", "atwood", "greeley",
+        "rodeoking", "bullhide", "charliehorse", "baileywestern", "serratelli",
+
+        # Western Wear - Apparel
+        "wrangler", "hooey", "panhandleslim", "cinch", "roper", "rockymountainclothing",
+        "scully", "drysdales", "westportbigandtall", "millerranch", "ranchwear",
+
+        # Western Wear - Premium/Lifestyle
+        "txstandard", "texasstandard", "doubledranchwear", "manready", "imogeneandwillie",
+        "ryonabrands", "barkingirons",
+
+        # Rodeo/Western Organizations & Events
+        "prca", "prorodeo", "pbr", "pbrockstar", "nfrodeo", "wranglernfr",
+        "rncfr", "tfrrodeo", "houstonstockshow", "sanantoniostockshow", "fortworth",
+        "cheyennefrontierdays", "calgarystampede", "pendletonroundup",
+
+        # Western Lifestyle Brands
+        "yellowstone", "yelllowstonetv", "1883", "1923", "taylorsheridon",
+        "yeti", "traeger", "kodiak", "carhartt", "filson",
+
+        # Tack & Equipment
+        "martinsaddlery", "billcooksaddlery", "circley", "weaver", "professional",
+        "classicropes", "cactusropes", "topropes", "rattler", "lonestarropes"
+    }
+
+    # Western-specific accounts to track
+    KNOWN_WESTERN_INFLUENCERS = {
+        "taborropin", "speedwilliams", "claywsmith", "trevorbrazilebrand",
+        "tyemurray", "tyharris", "shylohuff", "ryantardibueno", "dallonkasel",
+        "sagejohnson", "wright_broncs", "jbmauney", "lockwood", "kobyradley"
     }
 
     # Known media outlets
@@ -612,7 +650,60 @@ class BrandAffinityAnalyzer:
         "entertainment": ["netflix", "disney", "spotify", "hbo", "hulu"],
         "sports": ["nfl", "nba", "mlb", "nhl", "espn", "ufc"],
         "finance": ["robinhood", "coinbase", "venmo", "cashapp", "paypal"],
-        "travel": ["airbnb", "uber", "lyft", "delta", "united", "marriott"]
+        "travel": ["airbnb", "uber", "lyft", "delta", "united", "marriott"],
+
+        # Western Wear Categories
+        "western_boots": [
+            "lucchese", "tecovas", "ariat", "justinboots", "tonylamaboots",
+            "andersonbean", "oldgringoboots", "corralboots", "danhpost",
+            "laredo", "durango", "twistex", "cavenders", "bootbarn", "sheplers"
+        ],
+        "western_hats": [
+            "resistol", "stetson", "americanhatco", "prohats", "atwood",
+            "greeley", "rodeoking", "bullhide", "charliehorse", "baileywestern", "serratelli"
+        ],
+        "western_apparel": [
+            "wrangler", "hooey", "panhandleslim", "cinch", "roper",
+            "rockymountainclothing", "scully", "drysdales", "millerranch", "ranchwear"
+        ],
+        "western_premium": [
+            "txstandard", "texasstandard", "doubledranchwear", "manready",
+            "imogeneandwillie", "ryonabrands", "barkingirons"
+        ],
+        "rodeo_events": [
+            "prca", "prorodeo", "pbr", "pbrockstar", "nfrodeo", "wranglernfr",
+            "rncfr", "houstonstockshow", "sanantoniostockshow", "fortworth",
+            "cheyennefrontierdays", "calgarystampede", "pendletonroundup"
+        ],
+        "western_lifestyle": [
+            "yellowstone", "yellowstonetv", "1883", "1923",
+            "yeti", "traeger", "kodiak", "carhartt", "filson"
+        ],
+        "rodeo_equipment": [
+            "martinsaddlery", "billcooksaddlery", "circley", "weaver",
+            "classicropes", "cactusropes", "topropes", "rattler", "lonestarropes"
+        ]
+    }
+
+    # Western influencers/athletes to track
+    WESTERN_INFLUENCERS = {
+        # Team Ropers
+        "taborropin", "speedwilliams", "claywsmith", "trevorbrazilebrand",
+        "kalubwray", "wesleyduby", "colemilligan", "tyleranderson",
+
+        # Bull Riders
+        "jbmauney", "lockwood", "dallonkasel", "josetovito",
+        "bushwacker", "sagejohnson", "kobyradley",
+
+        # Bronc Riders
+        "wright_broncs", "russmetal", "zekethe", "jadecoutts",
+
+        # Barrel Racers
+        "hailiekinsel", "brittanypozzi", "ivypconrado",
+        "tianyehager", "shalielarsson",
+
+        # Legends/Personalities
+        "tyemurray", "tyharris", "trevorbrazile", "rickysonnygreen"
     }
 
     def analyze_brand_affinity(
