@@ -5,7 +5,14 @@ from pydantic import BaseModel
 import os
 import sys
 
-app = FastAPI()
+# Import scraping routes
+from routes.scraping import router as scraping_router
+
+app = FastAPI(
+    title="RodeoAI API",
+    description="AI Chat and Social Media Scraping API",
+    version="1.0.0"
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -28,9 +35,13 @@ class ChatRequest(BaseModel):
     message: str
     model: str = "scamper"
 
+# Include scraping routes
+app.include_router(scraping_router)
+
+
 @app.get("/")
 def root():
-    return {"status": "ok"}
+    return {"status": "ok", "version": "1.0.0"}
 
 @app.post("/api/chat/")
 async def chat(request: ChatRequest):

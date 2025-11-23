@@ -135,6 +135,9 @@ export default function Home() {
             </li>
           ))}
         </ul>
+        <a href="/scrape" className="nav-link">
+          🔍 Social Scraper
+        </a>
       </aside>
 
       {/* Main chat area */}
