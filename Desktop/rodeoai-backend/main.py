@@ -10,11 +10,12 @@ from routes.scraping import router as scraping_router
 from routes.bulk_scraping import router as bulk_scraping_router
 from routes.intelligence import router as intelligence_router
 from routes.western import router as western_router
+from routes.data import router as data_router
 
 app = FastAPI(
     title="RodeoAI API",
-    description="AI Chat, High-Volume Scraping, Deep Intelligence & Western Market Intel API",
-    version="4.0.0"
+    description="AI Chat, High-Volume Scraping, Deep Intelligence, Western Market Intel & Data Aggregation API",
+    version="5.0.0"
 )
 
 app.add_middleware(
@@ -43,6 +44,7 @@ app.include_router(scraping_router)
 app.include_router(bulk_scraping_router)
 app.include_router(intelligence_router)
 app.include_router(western_router)
+app.include_router(data_router)
 
 
 # Startup/shutdown events for bulk engine
@@ -64,7 +66,7 @@ async def shutdown_event():
 
 @app.get("/")
 def root():
-    return {"status": "ok", "version": "4.0.0"}
+    return {"status": "ok", "version": "5.0.0"}
 
 @app.post("/api/chat/")
 async def chat(request: ChatRequest):
